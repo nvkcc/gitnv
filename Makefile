@@ -14,16 +14,28 @@ VALGRIND_FLAGS += --log-file=$(VALGRIND_LOG)
 # VALGRIND_FLAGS += --xml=yes
 # VALGRIND_FLAGS += --xml-file=valgrind.xml
 
-current: v test
+# Either release or debug.
+RELEASE := true
+
+ifeq ($(RELEASE), true)
+BUILD_TYPE := Release
+else
+BUILD_TYPE := Debug
+endif
+
+current: run
 
 configure:
-	cmake -DCMAKE_BUILD_TYPE=Release -S . -B $(BUILD_DIR)
-
-configure-debug:
-	cmake -DCMAKE_BUILD_TYPE=Debug -S . -B $(BUILD_DIR)
+	cmake -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -S . -B $(BUILD_DIR)
 
 build:
 	cmake --build $(BUILD_DIR)
+
+run: configure install
+	cd ~/repos/dwm && git-branch2
+	@echo
+	@echo '------'
+	cd ~/repos/git-zsh-prompt && git-branch2
 
 install: build
 	cmake --install $(BUILD_DIR)
