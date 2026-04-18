@@ -15,7 +15,7 @@ VALGRIND_FLAGS += --log-file=$(VALGRIND_LOG)
 # VALGRIND_FLAGS += --xml-file=valgrind.xml
 
 # Either release or debug.
-RELEASE := true
+RELEASE := false
 
 ifeq ($(RELEASE), true)
 BUILD_TYPE := Release
@@ -35,7 +35,7 @@ run: configure install
 	cd ~/repos/dwm && git-branch2
 	@echo
 	@echo '------'
-	cd ~/repos/git-zsh-prompt && git-branch2
+	cd ~/repos/git-branch2 && git-branch2
 
 install: build
 	cmake --install $(BUILD_DIR)

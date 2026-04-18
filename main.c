@@ -1,3 +1,4 @@
+#include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -15,6 +16,7 @@
 
 // #define DEBUG
 #ifdef DEBUG
+#include <stdio.h>
 static int DEBUG_ID = 0;
 #define debug_printf(format, ...)                                              \
     fprintf(stderr, "[\x1b[32mINFO\x1b[m] (%d) " format "\n", DEBUG_ID++,      \
@@ -64,28 +66,43 @@ int main() {
         // Don't send anything to STDERR.
         close(STDERR_FILENO);
         close(pd_b.fd[0]), close(pd_b.fd[1]);
-        execlp("git", "git", "branch", "--show-current", NULL);
+        return execlp("git", "git", "branch", "--show-current", NULL);
     } else {
         close(pd_b.fd[1]);
     }
 
     waitpid(pd_b.pid, NULL, 0);
 
+#define PREFIX "%F{241}("
+
     /// `git branch` byte buffer.
-    char buf_b[GIT_BRANCH_BUF_MAX];
+    char buf_b[GIT_BRANCH_BUF_MAX] = PREFIX;
     /// `git remote` byte buffer.
     char buf_r[GIT_REMOTE_BUF_MAX];
+    char *ptr_b = buf_b + sizeof(PREFIX) - 1;
+
+    debug_printf("pid = %d", pd_b.pid);
 
     // By construction, buf_b_len < GIT_BRANCH_BUF_MAX.
-    const int buf_b_len = read(pd_b.fd[0], buf_b, GIT_BRANCH_BUF_MAX - 1);
-    buf_b[buf_b_len] = '\0';
-    debug_printf("Bytes read from `git branch`: %d", buf_b_len);
+    const int bytes_read_b =
+        read(pd_b.fd[0], ptr_b, GIT_BRANCH_BUF_MAX - sizeof(PREFIX));
+    debug_printf("Bytes read from `git branch` = %d", bytes_read_b);
 
     // `git branch --show-current` returned an empty string. This is not a git
     // repository. Do nothing and end early.
-    if (buf_b_len == 0) {
+    if (bytes_read_b == 0) {
         return 0;
     }
+    const int buf_b_len = sizeof(PREFIX) + bytes_read_b - 1;
+    debug_printf("Buffer length for `git branch` = %d", buf_b_len);
+
+    // Carefully terminate the string.
+    buf_b[buf_b_len] = '\0';
+
+    // Set the last char (which is expected to be '\n') to the closing
+    // parenthesis ')' because that's exactly what we'll print after the branch
+    // in all scenarios.
+    buf_b[buf_b_len - 1] = ')';
 
     // Pipe data for `git remote`.
     struct pipedata pd_r;
@@ -108,45 +125,58 @@ int main() {
 
     // There is no remote. Just return the branch name.
     if (git_remote_exit_code != 0) {
-        debug_printf("No remote found. Exit code: %d", git_remote_exit_code);
-        SEND_STDOUT("%F{241}(");
-        buf_b[buf_b_len - 1] = ')';
+        debug_printf(
+            "git config get remote.origin.url returned non-zero exit code: %d",
+            git_remote_exit_code);
         write(STDOUT_FILENO, buf_b, buf_b_len);
         return 0;
     }
 
     // By construction, buf_r_len < GIT_REMOTE_BUF_MAX.
     const int buf_r_len = read(pd_r.fd[0], buf_r, GIT_REMOTE_BUF_MAX - 1);
-    debug_printf("Bytes read from `git remote`: %d", buf_r_len);
-    buf_r[buf_r_len] = '\0';
+    debug_printf("Bytes read from `git remote` = %d", buf_r_len);
 
     // Remote is empty. Just return the branch name.
-    if (git_remote_exit_code != 0) {
-        debug_printf("No remote found. Exit code: %d", git_remote_exit_code);
-        SEND_STDOUT("%F{241}(");
-        buf_b[buf_b_len - 1] = ')';
+    if (buf_r_len == 0) {
+        debug_printf("git config get remote.origin.url returned empty string",
+                     0);
         write(STDOUT_FILENO, buf_b, buf_b_len);
         return 0;
     }
 
+    // Carefully terminate the string.
+    buf_r[buf_r_len] = '\0';
+
+    // Print the prefix first.
+    SEND_STDOUT(PREFIX "%F{246}");
+
+    // Search from the back for the '/' character.
     char *remote_start = buf_r + buf_r_len - 1;
     while (*remote_start != '/' && remote_start > buf_r) {
         remote_start--;
     }
-    buf_r[buf_r_len - 1] = ')';
+    remote_start += *remote_start == '/';
+
+    // If the '/' character is not found, print a ??? in the stead of the remote
+    // name. This is because we at least know it exists, but we don't know as
+    // what.
     if (remote_start == buf_r) {
-        // No path separator found in the URL. Just send the whole darn remote.
-        SEND_STDOUT("%F{241}(%F{246}");
-        write(STDOUT_FILENO, buf_b, buf_b_len - 1);
-        SEND_STDOUT("%F{241}");
-        write(STDOUT_FILENO, buf_r, buf_r_len);
-    } else {
-        debug_printf("GOT HERE", 0);
-        SEND_STDOUT("%F{241}(%F{246}");
-        write(STDOUT_FILENO, buf_b, buf_b_len - 1);
-        SEND_STDOUT("%F{241}");
-        write(STDOUT_FILENO, remote_start, buf_r_len - (remote_start - buf_r));
+        SEND_STDOUT("???%F{241}/");
+        write(STDOUT_FILENO, buf_b, buf_b_len);
+        return 0;
     }
+
+    // Search from the `remote_start` for the '.' character.
+    char *remote_end = remote_start;
+    while (*remote_end != '.' && remote_end < buf_r + buf_r_len) {
+        remote_end++;
+    }
+    *remote_end = '/';
+    debug_printf("Made it to the end", 0);
+
+    write(STDOUT_FILENO, remote_start, remote_end - remote_start + 1);
+    SEND_STDOUT("%F{241}");
+    write(STDOUT_FILENO, buf_b, buf_b_len);
 
     return 0;
 }
