@@ -32,10 +32,7 @@ build:
 	cmake --build $(BUILD_DIR)
 
 run: configure install
-	cd ~/repos/dwm && git-branch2
-	@echo
-	@echo '------'
-	cd ~/repos/git-branch2 && git-branch2
+	cd ~/repos/dwm && git nv status
 
 install: build
 	cmake --install $(BUILD_DIR)
