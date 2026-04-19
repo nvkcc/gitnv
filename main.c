@@ -1,4 +1,8 @@
 #include "git2.h"
+#include "git2/config.h"
+#include "git2/sys/config.h"
+#include "git2/sys/repository.h"
+#include "git2/types.h"
 
 #include <string.h>
 #include <sys/wait.h>
@@ -52,20 +56,59 @@ struct pipedata {
 
 static char CURRENT_DIR[1024];
 
-int main(int argc, char *argv[]) {
+const char *TEST_PATH = "/home/khang/repos/financial-plan/c++";
+
+int main_inner(int argc, char *argv[]) {
+    int err;
     debug_printf("START EXECUTION", 0);
-    git_libgit2_init();
-    git_buf root = {0};
-    git_repository_discover(&root, "/home/khang/repos/financial-plan/c++", 0,
-                            NULL);
+    git_buf git_dir = {0};
+    git_repository *repo;
 
-    debug_printf("%s\n", root.ptr);
+    err = git_repository_discover(&git_dir, TEST_PATH, 0, NULL);
+    if (err != 0) {
+        SEND_STDOUT("Not in a git repository.");
+        return 1;
+    }
+    debug_printf("Found git dir: %s", git_dir.ptr);
 
+    err = git_repository_open(&repo, git_dir.ptr);
+    if (err != 0) {
+        SEND_STDOUT("libgit2 failed to open the repository.");
+        return 1;
+    }
+    // repo->_config;
+    // repo->_config;
+
+    debug_printf("GOT TO HERE!", 0);
+
+    return 0;
+
+    git_config *cfg;
+
+    git_config_iterator *it;
+    git_config_entry *entry;
+
+    git_config_iterator_glob_new(&it, cfg, "^alias.");
+    while (git_config_next(&entry, it) == 0) {
+        debug_printf("%s", entry->name);
+    }
+    git_config_iterator_free(it);
+
+    // for (; git_config_next())
+    // *cfg, const char *regexp);
+
+    return 0;
+}
+
+int main(int argc, char *argv[]) {
     if (!getcwd(CURRENT_DIR, 1024)) {
         SEND_STDERR("Failed to get current working directory.");
         return 1;
     }
+    git_libgit2_init();
+    int result = main_inner(argc, argv);
     git_libgit2_shutdown();
+    return result;
 }
 
 // debug_printf("\x1b[33mDEBUG MODE\x1b[m", 0);

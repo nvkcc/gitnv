@@ -7,7 +7,7 @@ set(CMAKE_C_FLAGS "-O3")
 set(CMAKE_INSTALL_PREFIX /usr/local)
 set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY true)
 
-# Set libgit2 options (e.g. disable shared lib)
+# libgit2 options
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 set(BUILD_CLAR OFF CACHE BOOL "" FORCE)
 set(BUILD_CLI OFF CACHE BOOL "" FORCE)
