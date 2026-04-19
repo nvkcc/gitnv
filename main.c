@@ -75,27 +75,30 @@ void create_cache_file(git_buf *git_dir) {
     // debug_printf("%s", buf);
 }
 
+int gitnv_status_update_cache(GitnvState *z, git_status_list *gsl) {
+    int n = git_status_list_entrycount(gsl), i = 0;
+    for (const git_status_entry *entry; i < n; ++i) {
+        entry = git_status_byindex(gsl, i);
+        debug_printf("%s", entry->index_to_workdir->new_file.path);
+        debug_printf("%s", entry->index_to_workdir->old_file.path);
+    }
+}
+
 /// The custom opinionated `git-nv status` output.
-int status(GitnvState *z) {
+int gitnv_status(GitnvState *z) {
     debug_printf("Running `git nv status!`", 0);
-    git_status_list *ls;
+    git_status_list *gsl;
     git_status_options opts = GIT_STATUS_OPTIONS_INIT;
     opts.flags = GIT_STATUS_OPT_INCLUDE_UNTRACKED |
                  GIT_STATUS_OPT_RENAMES_HEAD_TO_INDEX |
                  GIT_STATUS_OPT_SORT_CASE_SENSITIVELY;
-    git_status_list_new(&ls, z->repo, NULL);
-    int n = git_status_list_entrycount(ls), i = 0;
-    for (; i < n; ++i) {
-        const git_status_entry *entry = git_status_byindex(ls, i);
-        debug_printf("%s", entry->index_to_workdir->new_file.path);
-        debug_printf("%s", entry->index_to_workdir->old_file.path);
-    }
-    git_status_byindex(ls, 1);
-    git_status_list_free(ls);
+    git_status_list_new(&gsl, z->repo, &opts);
+    gitnv_status_update_cache(z, gsl);
+    git_status_list_free(gsl);
     return 0;
 }
 
-int non_status_git_command(int argc, char *argv[], GitnvState *z) { return 0; }
+int gitnv_non_status(int argc, char *argv[], GitnvState *z) { return 0; }
 
 int main_inner(int argc, char *argv[]) {
     int err;
@@ -113,9 +116,9 @@ int main_inner(int argc, char *argv[]) {
     }
 
     if (argc == 2 && strncmp(argv[1], "status", 6) == 0) {
-        status(z);
+        gitnv_status(z);
     } else {
-        non_status_git_command(argc, argv, z);
+        gitnv_non_status(argc, argv, z);
     }
     //     non_status_git_command(argc, argv, z);
     //     git_config *config;
