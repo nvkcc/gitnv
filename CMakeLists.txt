@@ -15,7 +15,7 @@ set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(BUILD_FUZZERS OFF CACHE BOOL "" FORCE)
 
-add_executable(git-nv main.c)
+add_executable(git-nv main.c kstr.c)
 set_property(TARGET git-nv PROPERTY C_STANDARD 11)
 
 include(FetchContent)

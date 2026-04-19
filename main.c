@@ -1,12 +1,11 @@
-#include "git2.h"
-#include "git2/config.h"
-#include "git2/sys/config.h"
-#include "git2/sys/repository.h"
-#include "git2/types.h"
+#include <git2.h>
+#include <git2/repository.h>
 
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#include "kstr.h"
 
 #define GIT_BRANCH_BUF_MAX 256
 #define GIT_REMOTE_BUF_MAX (1024 - GIT_BRANCH_BUF_MAX)
@@ -58,11 +57,44 @@ static char CURRENT_DIR[1024];
 
 const char *TEST_PATH = "/home/khang/repos/financial-plan/c++";
 
+#define GIT_ALIAS_MAX_LEN 16
+#define MAX_GIT_ALIASES 10
+static char GIT_ALIASES[MAX_GIT_ALIASES][2][GIT_ALIAS_MAX_LEN];
+static int GIT_ALIASES_LEN[MAX_GIT_ALIASES][2];
+static int NUM_GIT_ALIASES;
+
+int gather_aliases(git_config *config) {
+    int i = 0, key_len, val_len, err;
+    git_config_iterator *it;
+    git_config_iterator_glob_new(&it, config, "^alias.");
+    git_config_entry *entry;
+    for (; (err = git_config_next(&entry, it)) != GIT_ITEROVER; i++) {
+        // TODO: handle the `err`.
+        if (i == MAX_GIT_ALIASES) {
+            SEND_STDERR("Exceeded maximum number of git aliases.");
+            return 1;
+        }
+        key_len = strlen(entry->name);
+        val_len = strlen(entry->value);
+        if (key_len > GIT_ALIAS_MAX_LEN || val_len > GIT_ALIAS_MAX_LEN) {
+            SEND_STDERR("There is a git alias that is longer than the maximum "
+                        "length allowed.");
+            return 1;
+        }
+        strncpy(GIT_ALIASES[i][0], entry->name, key_len);
+        strncpy(GIT_ALIASES[i][1], entry->value, val_len);
+    }
+    NUM_GIT_ALIASES = i;
+    git_config_iterator_free(it);
+    return 0;
+}
+
 int main_inner(int argc, char *argv[]) {
     int err;
     debug_printf("START EXECUTION", 0);
     git_buf git_dir = {0};
     git_repository *repo;
+    git_config *config;
 
     err = git_repository_discover(&git_dir, TEST_PATH, 0, NULL);
     if (err != 0) {
@@ -76,31 +108,18 @@ int main_inner(int argc, char *argv[]) {
         SEND_STDOUT("libgit2 failed to open the repository.");
         return 1;
     }
-    // repo->_config;
-    // repo->_config;
-
-    debug_printf("GOT TO HERE!", 0);
-
-    return 0;
-
-    git_config *cfg;
-
-    git_config_iterator *it;
-    git_config_entry *entry;
-
-    git_config_iterator_glob_new(&it, cfg, "^alias.");
-    while (git_config_next(&entry, it) == 0) {
-        debug_printf("%s", entry->name);
+    git_repository_config(&config, repo);
+    if ((err = gather_aliases(config)) != 0) {
+        SEND_STDOUT("gather_aliases failed.");
+        return err;
     }
-    git_config_iterator_free(it);
-
-    // for (; git_config_next())
-    // *cfg, const char *regexp);
+    debug_printf("Number of git aliases: %d", NUM_GIT_ALIASES);
 
     return 0;
 }
 
 int main(int argc, char *argv[]) {
+    argv[0] = "git";
     if (!getcwd(CURRENT_DIR, 1024)) {
         SEND_STDERR("Failed to get current working directory.");
         return 1;
