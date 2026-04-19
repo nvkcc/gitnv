@@ -21,10 +21,6 @@ include(FetchContent)
 FetchContent_Declare(
   libgit2
   URL https://github.com/libgit2/libgit2/archive/ca225744b992bf2bf24e9a2eb357ddef78179667.zip) # v1.9.2
-# FetchContent_Declare(
-#   libgit2
-#   GIT_REPOSITORY https://github.com/libgit2/libgit2.git
-#   GIT_TAG        ca225744b992bf2bf24e9a2eb357ddef78179667) # v1.9.2
 FetchContent_MakeAvailable(libgit2)
 
 if(NOT WIN32)
@@ -33,21 +29,12 @@ if(NOT WIN32)
   set(Yellow      "${Esc}[33m")
 endif()
 
-message(STATUS "${Yellow}LibGit2 source dir: ${libgit2_SOURCE_DIR}${ColourReset}")
-message(STATUS "${Yellow}LibGit2 libraries: ${libgit2_LIBRARIES}${ColourReset}")
-
-# Print all accessible variables.
-get_cmake_property(_variableNames VARIABLES)
-list (SORT _variableNames)
-foreach (_variableName ${_variableNames})
-    message(STATUS "${Yellow}${_variableName}=${${_variableName}}${ColourReset}")
-endforeach()
-
 target_include_directories(git-nv PRIVATE "${libgit2_SOURCE_DIR}/include" ${libgit2_SOURCE_DIR})
+target_link_libraries(git-nv PRIVATE libgit2package)
 
+# Define the macro `#define DEBUG` if the build type is set to "Debug".
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_definitions(git-nv PUBLIC DEBUG)
-    string(ASCII 27 Esc)
     message(STATUS "${Yellow}Building git-nv in debug mode.${ColourReset}")
 endif()
 

@@ -19,10 +19,8 @@
 // #define DEBUG
 #ifdef DEBUG
 #include <stdio.h>
-static int DEBUG_ID = 0;
 #define debug_printf(format, ...)                                              \
-    fprintf(stderr, "[\x1b[32mINFO\x1b[m] (%d) " format "\n", DEBUG_ID++,      \
-            __VA_ARGS__)
+    fprintf(stderr, "[\x1b[32mINFO\x1b[m] " format "\n", __VA_ARGS__)
 #else
 #define debug_printf(...)
 #endif
@@ -55,12 +53,19 @@ struct pipedata {
 static char CURRENT_DIR[1024];
 
 int main(int argc, char *argv[]) {
-    // git_libgit2_init();
+    git_libgit2_init();
+    git_buf root = {0};
+    git_repository_discover(&root, "/home/khang/repos/financial-plan/c++", 0,
+                            NULL);
+
+
+    debug_printf("%s\n", root.ptr);
 
     if (!getcwd(CURRENT_DIR, 1024)) {
         SEND_STDERR("Failed to get current working directory.");
         return 1;
     }
+    git_libgit2_shutdown();
 }
 
 // debug_printf("\x1b[33mDEBUG MODE\x1b[m", 0);
