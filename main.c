@@ -33,29 +33,18 @@
 #endif
 
 #define SEND_STDERR(msg) write(STDERR_FILENO, msg, sizeof(msg));
-#define SEND_STDERR_LN(msg) SEND_STDERR(msg), write(STDERR_FILENO, "\n", 1);
+#define SEND_STDERR_LN(msg)                                                    \
+    SEND_STDERR(msg);                                                          \
+    write(STDERR_FILENO, "\n", 1);
 #define SEND_STDOUT(msg) write(STDOUT_FILENO, msg, sizeof(msg));
-#define SEND_STDOUT_LN(msg) SEND_STDOUT(msg), write(STDOUT_FILENO, "\n", 1);
+#define SEND_STDOUT_LN(msg)                                                    \
+    SEND_STDOUT(msg);                                                          \
+    write(STDOUT_FILENO, "\n", 1);
 
 struct pipedata {
     int fd[2];
     pid_t pid;
 };
-
-#define PIPE_AND_FORK(pd, COMMAND)                                             \
-    if (pipe(pd.fd) == -1) {                                                   \
-        SEND_STDERR("pipe");                                                   \
-        SEND_STDERR(" failed. This is necessary to run `git ");                \
-        SEND_STDERR(#COMMAND);                                                 \
-        SEND_STDERR("`.");                                                     \
-        return 1;                                                              \
-    } else if ((pd.pid = fork()) == -1) {                                      \
-        SEND_STDERR("fork");                                                   \
-        SEND_STDERR(" failed. This is necessary to run `git ");                \
-        SEND_STDERR(#COMMAND);                                                 \
-        SEND_STDERR("`.");                                                     \
-        return 1;                                                              \
-    }
 
 static char CURRENT_DIR[GITNV_MAX_PATH_LEN];
 
@@ -112,35 +101,85 @@ void create_cache_file(git_buf *git_dir) {
     // debug_printf("%s", buf);
 }
 
+typedef struct {
+    git_repository *repo;
+    git_buf git_dir;
+} GitnvState;
+
+int gitnv_state_new(GitnvState **out) {
+    *out = malloc(sizeof(GitnvState));
+
+    // Find the path to the git directory. This is the directory with
+    // "branches/", "refs/", "HEAD", and so on.
+    if (git_repository_discover(&(*out)->git_dir, CURRENT_DIR, 0, NULL) != 0) {
+        SEND_STDERR_LN("Not in a git repository.");
+        return 1;
+    }
+    debug_printf("Found git dir: %s", (*out)->git_dir.ptr);
+
+    // Open the git repository with libgit2.
+    if (git_repository_open(&(*out)->repo, (*out)->git_dir.ptr) != 0) {
+        SEND_STDERR_LN("Failed to open git repository in libgit2.");
+        return 1;
+    }
+
+    return 0;
+}
+
+int gitnv_state_free(GitnvState *state) {
+    git_repository_free(state->repo);
+    free(state);
+    return 0;
+}
+
+/// The custom opinionated `git-nv status` output.
+int status(GitnvState *z) {
+    debug_printf("Running `git nv status!`", 0);
+    git_status_list *ls;
+    git_status_options opts = GIT_STATUS_OPTIONS_INIT;
+    opts.flags = GIT_STATUS_OPT_INCLUDE_UNTRACKED |
+                 GIT_STATUS_OPT_RENAMES_HEAD_TO_INDEX |
+                 GIT_STATUS_OPT_SORT_CASE_SENSITIVELY;
+    git_status_list_new(&ls, z->repo, NULL);
+    const int n = git_status_list_entrycount(ls);
+    for (int i = 0; i < n; ++i) {
+        const git_status_entry *entry = git_status_byindex(ls, i);
+        debug_printf("%s", entry->index_to_workdir->new_file.path);
+        debug_printf("%s", entry->index_to_workdir->old_file.path);
+    }
+    git_status_byindex(ls, 1);
+    git_status_list_free(ls);
+    return 0;
+}
+
+int non_status_git_command(int argc, char *argv[], GitnvState *z) { return 0; }
+
 int main_inner(int argc, char *argv[]) {
     int err;
     debug_printf("START EXECUTION", 0);
+
+    for (int i = 0; i < argc; ++i) {
+        debug_printf("arg[%d] = %s", i, argv[i]);
+    }
     debug_printf("CURRENT_DIR = %s", CURRENT_DIR);
-    git_buf git_dir = {0};
-    git_repository *repo;
-    git_config *config;
-    // cwk_path_join();
+    GitnvState *z = NULL;
+    gitnv_state_new(&z);
+    debug_printf("GOT HERE SAFELY!", 0);
 
-    err = git_repository_discover(&git_dir, CURRENT_DIR, 0, NULL);
-    if (err != 0) {
-        SEND_STDOUT("Not in a git repository.");
-        return 1;
-    }
-    debug_printf("Found git dir: %s", git_dir.ptr);
+    if (argc == 2 && strncmp(argv[1], "status", 6) == 0) {
+        status(z);
+    } else {
+        non_status_git_command(argc, argv, z);
+        git_config *config;
 
-    err = git_repository_open(&repo, git_dir.ptr);
-    if (err != 0) {
-        SEND_STDOUT("libgit2 failed to open the repository.");
-        return 1;
+        git_repository_config(&config, z->repo);
+        if ((err = gather_aliases(config)) != 0) {
+            SEND_STDOUT("gather_aliases failed.");
+        } else {
+            debug_printf("Number of git aliases: %d", NUM_GIT_ALIASES);
+        }
     }
-    git_repository_config(&config, repo);
-    if ((err = gather_aliases(config)) != 0) {
-        SEND_STDOUT("gather_aliases failed.");
-        return err;
-    }
-    debug_printf("Number of git aliases: %d", NUM_GIT_ALIASES);
-    create_cache_file(&git_dir);
-
+    gitnv_state_free(z);
     return 0;
 }
 
@@ -155,29 +194,3 @@ int main(int argc, char *argv[]) {
     git_libgit2_shutdown();
     return result;
 }
-
-// debug_printf("\x1b[33mDEBUG MODE\x1b[m", 0);
-//
-// // Pipe data for `git branch`.
-// struct pipedata pd_b;
-// PIPE_AND_FORK(pd_b, branch);
-//
-// /* Child process: `git branch` */
-// if (pd_b.pid == 0) {
-//     // Capture `git branch` STDOUT.
-//     dup2(pd_b.fd[1], STDOUT_FILENO);
-//     // Don't send anything to STDERR.
-//     close(STDERR_FILENO);
-//     close(pd_b.fd[0]), close(pd_b.fd[1]);
-//     return execlp("git", "git", "branch", "--show-current", NULL);
-// } else {
-//     close(pd_b.fd[1]);
-// }
-//
-// waitpid(pd_b.pid, NULL, 0);
-// for (int i = 0; i < argc; i++) {
-//     debug_printf(" * [%d] = %s", i, argv[i]);
-// }
-// argv[0] = "git";
-//
-// return execvp("git", argv);
