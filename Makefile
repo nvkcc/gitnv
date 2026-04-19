@@ -35,7 +35,7 @@ run: install
 	cd ~/repos/dwm && git nv status
 
 install: build
-	cmake --install $(BUILD_DIR) --component=git-nv
+	cmake --install $(BUILD_DIR)
 
 v: configure install
 	-@rm -f valgrind-log*.txt

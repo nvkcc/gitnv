@@ -5,6 +5,7 @@ project(git-nv C)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_C_FLAGS "-O3")
 set(CMAKE_INSTALL_PREFIX /usr/local)
+set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY true)
 
 # Set libgit2 options (e.g. disable shared lib)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
@@ -29,7 +30,7 @@ if(NOT WIN32)
   set(Yellow      "${Esc}[33m")
 endif()
 
-target_include_directories(git-nv PRIVATE "${libgit2_SOURCE_DIR}/include" ${libgit2_SOURCE_DIR})
+target_include_directories(git-nv PRIVATE "${libgit2_SOURCE_DIR}/include")
 target_link_libraries(git-nv PRIVATE libgit2package)
 
 # Define the macro `#define DEBUG` if the build type is set to "Debug".

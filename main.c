@@ -53,11 +53,11 @@ struct pipedata {
 static char CURRENT_DIR[1024];
 
 int main(int argc, char *argv[]) {
+    debug_printf("START EXECUTION", 0);
     git_libgit2_init();
     git_buf root = {0};
     git_repository_discover(&root, "/home/khang/repos/financial-plan/c++", 0,
                             NULL);
-
 
     debug_printf("%s\n", root.ptr);
 
