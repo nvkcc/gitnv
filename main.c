@@ -1,3 +1,5 @@
+#include "git2.h"
+
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -53,6 +55,8 @@ struct pipedata {
 static char CURRENT_DIR[1024];
 
 int main(int argc, char *argv[]) {
+    // git_libgit2_init();
+
     if (!getcwd(CURRENT_DIR, 1024)) {
         SEND_STDERR("Failed to get current working directory.");
         return 1;

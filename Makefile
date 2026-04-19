@@ -23,13 +23,13 @@ else
 BUILD_TYPE := Debug
 endif
 
-current: run
+current: build
 
 configure:
-	cmake -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -S . -B $(BUILD_DIR)
+	cmake -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -S . -B $(BUILD_DIR) -G Ninja
 
 build:
-	cmake --build $(BUILD_DIR)
+	cmake --build $(BUILD_DIR) --parallel 4
 
 run: configure install
 	cd ~/repos/dwm && git nv status
