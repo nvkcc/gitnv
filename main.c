@@ -1,14 +1,18 @@
 #include <git2.h>
 #include <git2/repository.h>
 
+#include <cwalk.h>
+
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
 #include "kstr.h"
 
+#define GITNV_MAX_PATH_LEN 1024
 #define GIT_BRANCH_BUF_MAX 256
 #define GIT_REMOTE_BUF_MAX (1024 - GIT_BRANCH_BUF_MAX)
+#define GITNV_CACHE_FILENAME "gitnv.txt"
 
 // Ban list.
 // 1. printf: in production we want zero allocations.
@@ -53,9 +57,7 @@ struct pipedata {
         return 1;                                                              \
     }
 
-static char CURRENT_DIR[1024];
-
-const char *TEST_PATH = "/home/khang/repos/financial-plan/c++";
+static char CURRENT_DIR[GITNV_MAX_PATH_LEN];
 
 #define GIT_ALIAS_MAX_LEN 16
 #define MAX_GIT_ALIASES 10
@@ -89,14 +91,37 @@ int gather_aliases(git_config *config) {
     return 0;
 }
 
+void create_cache_file(git_buf *git_dir) {
+    char cache_filepath[GITNV_MAX_PATH_LEN];
+    cwk_path_join(git_dir->ptr, GITNV_CACHE_FILENAME, cache_filepath,
+                  GITNV_MAX_PATH_LEN);
+    FILE *f = fopen(cache_filepath, "w+");
+    fwrite("HEYYYYYYYYYYYYYYYYYYYYYYYY", 10, 1, f);
+    fclose(f);
+    debug_printf("%s", cache_filepath);
+
+    // The prefix to be pre-pended to every "git status" entry to make it such
+    // that each one is relative to `git_dir`. Note that "git status" shows
+    // filepaths relative to the current working directory (`CURRENT_DIR`).
+    char prefix[GITNV_MAX_PATH_LEN];
+
+    cwk_path_get_relative(git_dir->ptr, CURRENT_DIR, prefix,
+                          GITNV_MAX_PATH_LEN);
+    debug_printf("%s", prefix);
+    // cwk_path_get_relative(b, a, buf, GITNV_MAX_PATH_LEN);
+    // debug_printf("%s", buf);
+}
+
 int main_inner(int argc, char *argv[]) {
     int err;
     debug_printf("START EXECUTION", 0);
+    debug_printf("CURRENT_DIR = %s", CURRENT_DIR);
     git_buf git_dir = {0};
     git_repository *repo;
     git_config *config;
+    // cwk_path_join();
 
-    err = git_repository_discover(&git_dir, TEST_PATH, 0, NULL);
+    err = git_repository_discover(&git_dir, CURRENT_DIR, 0, NULL);
     if (err != 0) {
         SEND_STDOUT("Not in a git repository.");
         return 1;
@@ -114,6 +139,7 @@ int main_inner(int argc, char *argv[]) {
         return err;
     }
     debug_printf("Number of git aliases: %d", NUM_GIT_ALIASES);
+    create_cache_file(&git_dir);
 
     return 0;
 }

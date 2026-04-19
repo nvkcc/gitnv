@@ -22,7 +22,10 @@ include(FetchContent)
 FetchContent_Declare(
   libgit2
   URL https://github.com/libgit2/libgit2/archive/ca225744b992bf2bf24e9a2eb357ddef78179667.zip) # v1.9.2
-FetchContent_MakeAvailable(libgit2)
+FetchContent_Declare(
+  cwalk
+  URL https://github.com/likle/cwalk/archive/f45a23a13abf39d94b347d7c83810eca26a5a8d0.zip) # v1.2.9
+FetchContent_MakeAvailable(libgit2 cwalk)
 
 if(NOT WIN32)
   string(ASCII 27 Esc)
@@ -31,7 +34,7 @@ if(NOT WIN32)
 endif()
 
 target_include_directories(git-nv PRIVATE "${libgit2_SOURCE_DIR}/include")
-target_link_libraries(git-nv PRIVATE libgit2package)
+target_link_libraries(git-nv PRIVATE libgit2package cwalk)
 
 # Define the macro `#define DEBUG` if the build type is set to "Debug".
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")

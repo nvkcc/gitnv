@@ -32,7 +32,7 @@ build:
 	cmake --build $(BUILD_DIR) --parallel 4
 
 run: install
-	cd ~/repos/dwm && git nv status
+	cd ~/repos/Algebra/Algebra/DummitFoote && git nv status
 
 install: build
 	cmake --install $(BUILD_DIR)
