@@ -50,8 +50,8 @@ v: install
 		valgrind $(VALGRIND_FLAGS) -- git-nv status
 	-nvim valgrind-log*
 
-test: configure install
-	cargo test -- --test-threads=1
+test: build
+	cd $(BUILD_DIR) && ctest
 
 fmt:
 	git ls-files '*.c' '*.h' | xargs clang-format -i

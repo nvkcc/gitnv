@@ -20,11 +20,6 @@
 #define STARTS_WITH(haystack, prefix)                                          \
     (strncmp(haystack, prefix, sizeof(prefix) - 1) == 0)
 
-struct pipedata {
-    int fd[2];
-    pid_t pid;
-};
-
 static char CURRENT_DIR[GITNV_MAX_PATH_LEN];
 
 #define GIT_ALIAS_MAX_LEN 16
