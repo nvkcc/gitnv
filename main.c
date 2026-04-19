@@ -50,32 +50,37 @@ struct pipedata {
         return 1;                                                              \
     }
 
-// Returns 64 if this function's stdout output is meant to be taken as the
-// target directory for the `cd` command.
+static char CURRENT_DIR[1024];
+
 int main(int argc, char *argv[]) {
-    debug_printf("\x1b[33mDEBUG MODE\x1b[m", 0);
-
-    // Pipe data for `git branch`.
-    struct pipedata pd_b;
-    PIPE_AND_FORK(pd_b, branch);
-
-    /* Child process: `git branch` */
-    if (pd_b.pid == 0) {
-        // Capture `git branch` STDOUT.
-        dup2(pd_b.fd[1], STDOUT_FILENO);
-        // Don't send anything to STDERR.
-        close(STDERR_FILENO);
-        close(pd_b.fd[0]), close(pd_b.fd[1]);
-        return execlp("git", "git", "branch", "--show-current", NULL);
-    } else {
-        close(pd_b.fd[1]);
+    if (!getcwd(CURRENT_DIR, 1024)) {
+        SEND_STDERR("Failed to get current working directory.");
+        return 1;
     }
-
-    waitpid(pd_b.pid, NULL, 0);
-    for (int i = 0; i < argc; i++) {
-        debug_printf(" * [%d] = %s", i, argv[i]);
-    }
-    argv[0] = "git";
-
-    return execvp("git", argv);
 }
+
+// debug_printf("\x1b[33mDEBUG MODE\x1b[m", 0);
+//
+// // Pipe data for `git branch`.
+// struct pipedata pd_b;
+// PIPE_AND_FORK(pd_b, branch);
+//
+// /* Child process: `git branch` */
+// if (pd_b.pid == 0) {
+//     // Capture `git branch` STDOUT.
+//     dup2(pd_b.fd[1], STDOUT_FILENO);
+//     // Don't send anything to STDERR.
+//     close(STDERR_FILENO);
+//     close(pd_b.fd[0]), close(pd_b.fd[1]);
+//     return execlp("git", "git", "branch", "--show-current", NULL);
+// } else {
+//     close(pd_b.fd[1]);
+// }
+//
+// waitpid(pd_b.pid, NULL, 0);
+// for (int i = 0; i < argc; i++) {
+//     debug_printf(" * [%d] = %s", i, argv[i]);
+// }
+// argv[0] = "git";
+//
+// return execvp("git", argv);
