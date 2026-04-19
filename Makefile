@@ -8,7 +8,7 @@ VALGRIND_LOG := $(MAKEFILE_DIR)/valgrind-log-%p.txt
 VALGRIND_FLAGS :=
 VALGRIND_FLAGS += --trace-children=yes
 VALGRIND_FLAGS += --show-error-list=yes
-# VALGRIND_FLAGS += --leak-check=full
+VALGRIND_FLAGS += --leak-check=full
 # VALGRIND_FLAGS += --show-leak-kinds=all
 VALGRIND_FLAGS += --log-file=$(VALGRIND_LOG)
 # VALGRIND_FLAGS += --xml=yes
@@ -22,6 +22,9 @@ BUILD_TYPE := Release
 else
 BUILD_TYPE := Debug
 endif
+
+TEST_DIR := ~/repos
+TEST_DIR := ~/repos/Algebra/Algebra/DummitFoote
 
 # current: run
 current: v
@@ -40,8 +43,9 @@ install: build
 
 v: install
 	-@rm -f valgrind-log*.txt
-	-cd ~/repos/Algebra/Algebra/DummitFoote && \
+	-cd $(TEST_DIR) && \
 		valgrind $(VALGRIND_FLAGS) -- git-nv status
+	-nvim valgrind-log*
 
 test: configure install
 	cargo test -- --test-threads=1

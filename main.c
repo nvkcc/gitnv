@@ -102,31 +102,37 @@ void create_cache_file(git_buf *git_dir) {
 }
 
 typedef struct {
-    git_repository *repo;
     git_buf git_dir;
+    git_repository *repo;
 } GitnvState;
 
 int gitnv_state_new(GitnvState **out) {
-    *out = malloc(sizeof(GitnvState));
+    GitnvState *z = malloc(sizeof(GitnvState));
 
     // Find the path to the git directory. This is the directory with
     // "branches/", "refs/", "HEAD", and so on.
-    if (git_repository_discover(&(*out)->git_dir, CURRENT_DIR, 0, NULL) != 0) {
+    if (git_repository_discover(&z->git_dir, CURRENT_DIR, 0, NULL) != 0) {
         SEND_STDERR_LN("Not in a git repository.");
+        free(z);
         return 1;
     }
-    debug_printf("Found git dir: %s", (*out)->git_dir.ptr);
+    debug_printf("Found git dir: %s", z->git_dir.ptr);
 
     // Open the git repository with libgit2.
-    if (git_repository_open(&(*out)->repo, (*out)->git_dir.ptr) != 0) {
+    if (git_repository_open(&z->repo, z->git_dir.ptr) != 0) {
         SEND_STDERR_LN("Failed to open git repository in libgit2.");
+        git_buf_free(&z->git_dir);
+        git_repository_free(z->repo);
+        free(z);
         return 1;
     }
 
+    *out = z;
     return 0;
 }
 
 int gitnv_state_free(GitnvState *state) {
+    git_buf_free(&state->git_dir);
     git_repository_free(state->repo);
     free(state);
     return 0;
@@ -163,21 +169,25 @@ int main_inner(int argc, char *argv[]) {
     }
     debug_printf("CURRENT_DIR = %s", CURRENT_DIR);
     GitnvState *z;
-    gitnv_state_new(&z);
-
-    if (argc == 2 && strncmp(argv[1], "status", 6) == 0) {
-        status(z);
-    } else {
-        non_status_git_command(argc, argv, z);
-        git_config *config;
-        git_repository_config(&config, z->repo);
-        if ((err = gather_aliases(config)) != 0) {
-            SEND_STDOUT("gather_aliases failed.");
-        } else {
-            debug_printf("Number of git aliases: %d", NUM_GIT_ALIASES);
-        }
-        git_config_free(config);
+    err = gitnv_state_new(&z);
+    if (err != 0) {
+        SEND_STDERR_LN("Failed to initialize git-nv state.");
+        return err;
     }
+
+    // if (argc == 2 && strncmp(argv[1], "status", 6) == 0) {
+    //     status(z);
+    // } else {
+    //     non_status_git_command(argc, argv, z);
+    //     git_config *config;
+    //     git_repository_config(&config, z->repo);
+    //     if ((err = gather_aliases(config)) != 0) {
+    //         SEND_STDOUT("gather_aliases failed.");
+    //     } else {
+    //         debug_printf("Number of git aliases: %d", NUM_GIT_ALIASES);
+    //     }
+    //     git_config_free(config);
+    // }
     gitnv_state_free(z);
     return 0;
 }
