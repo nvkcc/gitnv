@@ -162,22 +162,21 @@ int main_inner(int argc, char *argv[]) {
         debug_printf("arg[%d] = %s", i, argv[i]);
     }
     debug_printf("CURRENT_DIR = %s", CURRENT_DIR);
-    GitnvState *z = NULL;
+    GitnvState *z;
     gitnv_state_new(&z);
-    debug_printf("GOT HERE SAFELY!", 0);
 
     if (argc == 2 && strncmp(argv[1], "status", 6) == 0) {
         status(z);
     } else {
         non_status_git_command(argc, argv, z);
         git_config *config;
-
         git_repository_config(&config, z->repo);
         if ((err = gather_aliases(config)) != 0) {
             SEND_STDOUT("gather_aliases failed.");
         } else {
             debug_printf("Number of git aliases: %d", NUM_GIT_ALIASES);
         }
+        git_config_free(config);
     }
     gitnv_state_free(z);
     return 0;

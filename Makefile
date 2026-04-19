@@ -23,7 +23,8 @@ else
 BUILD_TYPE := Debug
 endif
 
-current: run
+# current: run
+current: v
 
 configure:
 	cmake -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -S . -B $(BUILD_DIR) -G Ninja
@@ -37,10 +38,10 @@ run: install
 install: build
 	cmake --install $(BUILD_DIR)
 
-v: configure install
+v: install
 	-@rm -f valgrind-log*.txt
-	-cd /home/khang/repos/dwm && \
-	valgrind $(VALGRIND_FLAGS) -- git-checkout2 snoop
+	-cd ~/repos/Algebra/Algebra/DummitFoote && \
+		valgrind $(VALGRIND_FLAGS) -- git-nv status
 
 test: configure install
 	cargo test -- --test-threads=1
