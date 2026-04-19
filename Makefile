@@ -26,8 +26,8 @@ endif
 TEST_DIR := ~/repos
 TEST_DIR := ~/repos/Algebra/Algebra/DummitFoote
 
-# current: run
-current: v
+current: run
+# current: v
 
 configure:
 	cmake -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) -S . -B $(BUILD_DIR) -G Ninja
@@ -36,7 +36,10 @@ build:
 	cmake --build $(BUILD_DIR) --parallel 4
 
 run: install
+	# ================================================================
 	git -C ~/repos/Algebra/Algebra/DummitFoote nv status
+	# ================================================================
+	git -C ~/repos/Algebra/Algebra/DummitFoote status
 
 install: build
 	cmake --install $(BUILD_DIR)

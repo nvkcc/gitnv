@@ -7,12 +7,9 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include "kstr.h"
-
-#define GITNV_MAX_PATH_LEN 1024
-#define GIT_BRANCH_BUF_MAX 256
-#define GIT_REMOTE_BUF_MAX (1024 - GIT_BRANCH_BUF_MAX)
-#define GITNV_CACHE_FILENAME "gitnv.txt"
+#include "config.h"
+#include "debug.h"
+#include "state.h"
 
 // Ban list.
 // 1. printf: in production we want zero allocations.
@@ -22,24 +19,6 @@
 
 #define STARTS_WITH(haystack, prefix)                                          \
     (strncmp(haystack, prefix, sizeof(prefix) - 1) == 0)
-
-// #define DEBUG
-#ifdef DEBUG
-#include <stdio.h>
-#define debug_printf(format, ...)                                              \
-    fprintf(stderr, "[\x1b[32mINFO\x1b[m] " format "\n", __VA_ARGS__)
-#else
-#define debug_printf(...)
-#endif
-
-#define SEND_STDERR(msg) write(STDERR_FILENO, msg, sizeof(msg));
-#define SEND_STDERR_LN(msg)                                                    \
-    SEND_STDERR(msg);                                                          \
-    write(STDERR_FILENO, "\n", 1);
-#define SEND_STDOUT(msg) write(STDOUT_FILENO, msg, sizeof(msg));
-#define SEND_STDOUT_LN(msg)                                                    \
-    SEND_STDOUT(msg);                                                          \
-    write(STDOUT_FILENO, "\n", 1);
 
 struct pipedata {
     int fd[2];
@@ -101,43 +80,6 @@ void create_cache_file(git_buf *git_dir) {
     // debug_printf("%s", buf);
 }
 
-typedef struct {
-    git_buf git_dir;
-    git_repository *repo;
-} GitnvState;
-
-int gitnv_state_new(GitnvState **out) {
-    GitnvState *z = malloc(sizeof(GitnvState));
-
-    // Find the path to the git directory. This is the directory with
-    // "branches/", "refs/", "HEAD", and so on.
-    if (git_repository_discover(&z->git_dir, CURRENT_DIR, 0, NULL) != 0) {
-        SEND_STDERR_LN("Not in a git repository.");
-        free(z);
-        return 1;
-    }
-    debug_printf("Found git dir: %s", z->git_dir.ptr);
-
-    // Open the git repository with libgit2.
-    if (git_repository_open(&z->repo, z->git_dir.ptr) != 0) {
-        SEND_STDERR_LN("Failed to open git repository in libgit2.");
-        git_buf_free(&z->git_dir);
-        git_repository_free(z->repo);
-        free(z);
-        return 1;
-    }
-
-    *out = z;
-    return 0;
-}
-
-int gitnv_state_free(GitnvState *state) {
-    git_buf_free(&state->git_dir);
-    git_repository_free(state->repo);
-    free(state);
-    return 0;
-}
-
 /// The custom opinionated `git-nv status` output.
 int status(GitnvState *z) {
     debug_printf("Running `git nv status!`", 0);
@@ -147,8 +89,8 @@ int status(GitnvState *z) {
                  GIT_STATUS_OPT_RENAMES_HEAD_TO_INDEX |
                  GIT_STATUS_OPT_SORT_CASE_SENSITIVELY;
     git_status_list_new(&ls, z->repo, NULL);
-    const int n = git_status_list_entrycount(ls);
-    for (int i = 0; i < n; ++i) {
+    int n = git_status_list_entrycount(ls), i = 0;
+    for (; i < n; ++i) {
         const git_status_entry *entry = git_status_byindex(ls, i);
         debug_printf("%s", entry->index_to_workdir->new_file.path);
         debug_printf("%s", entry->index_to_workdir->old_file.path);
@@ -169,15 +111,17 @@ int main_inner(int argc, char *argv[]) {
     }
     debug_printf("CURRENT_DIR = %s", CURRENT_DIR);
     GitnvState *z;
-    err = gitnv_state_new(&z);
+    err = gitnv_state_new(&z, CURRENT_DIR);
     if (err != 0) {
         SEND_STDERR_LN("Failed to initialize git-nv state.");
         return err;
     }
 
-    // if (argc == 2 && strncmp(argv[1], "status", 6) == 0) {
-    //     status(z);
-    // } else {
+    if (argc == 2 && strncmp(argv[1], "status", 6) == 0) {
+        status(z);
+    } else {
+        non_status_git_command(argc, argv, z);
+    }
     //     non_status_git_command(argc, argv, z);
     //     git_config *config;
     //     git_repository_config(&config, z->repo);

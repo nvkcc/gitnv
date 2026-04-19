@@ -48,6 +48,7 @@ include("./.github/colors.cmake")
 
 set(GITNV_SOURCES
     "${CMAKE_SOURCE_DIR}/kstr.c"
+    "${CMAKE_SOURCE_DIR}/state.c"
 )
 
 add_executable(git-nv "${CMAKE_SOURCE_DIR}/main.c" ${GITNV_SOURCES})
