@@ -1,0 +1,5 @@
+if(NOT WIN32)
+  string(ASCII 27 x1b)
+  set(ColourReset "${x1b}[m")
+  set(Yellow      "${x1b}[33m")
+endif()
