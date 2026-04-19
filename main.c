@@ -3,6 +3,9 @@
 
 #include <cwalk.h>
 
+#define __USE_POSIX
+
+#include <stdio.h>
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -86,6 +89,34 @@ int gitnv_status_update_cache(GitnvState *z, git_status_list *gsl) {
 
 /// The custom opinionated `git-nv status` output.
 int gitnv_status(GitnvState *z) {
+    int fd[2];
+    pid_t pid;
+    if (pipe(fd) == -1) {
+        SEND_STDERR_LN("Failed to start pipe for git status.");
+        return 1;
+    }
+    if ((pid = fork()) == -1) {
+        SEND_STDERR_LN("Failed to fork for git status.");
+        return 1;
+    }
+    if (pid == 0) {
+        // Capture `git status` STDOUT.
+        dup2(fd[1], STDOUT_FILENO);
+        // Let stderr bypass by doing nothing to STDERR_FILENO.
+        close(fd[0]);
+        close(fd[1]);
+        execlp("git", "git", "status", NULL);
+    } else {
+        close(fd[1]);
+    }
+    FILE *f = fdopen(fd[0], "r");
+    char readbuf[1024];
+    // fread();
+    // write();
+    // fwrite(;)
+    fgets(readbuf, 200, f);
+    // read(fd[0]);
+
     debug_printf("Running `git nv status!`", 0);
     git_status_list *gsl;
     git_status_options opts = GIT_STATUS_OPTIONS_INIT;
@@ -115,6 +146,8 @@ int main_inner(int argc, char *argv[]) {
         return err;
     }
 
+    // We only support enumerating the values of the vanilla `git nv status`
+    // command for now. Nothing else.
     if (argc == 2 && strncmp(argv[1], "status", 6) == 0) {
         gitnv_status(z);
     } else {
