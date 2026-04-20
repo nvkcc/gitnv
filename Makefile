@@ -26,7 +26,8 @@ endif
 TEST_DIR := ~/repos
 TEST_DIR := ~/repos/Algebra/Algebra/DummitFoote
 
-current: run
+current: test_bufreader
+# current: run
 # current: v
 
 configure:
@@ -34,6 +35,9 @@ configure:
 
 build:
 	cmake --build $(BUILD_DIR) --parallel 4
+
+test_bufreader: install
+	cat /home/khang/repos/Algebra/Algebra/DummitFoote/S02_E03_Cyclic_Groups_and_Subgroups.lean | git-nv
 
 run: install
 	# ================================================================

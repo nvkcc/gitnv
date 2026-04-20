@@ -1,6 +1,8 @@
 #include "state.h"
 #include "debug.h"
 
+#include <nk_log.h>
+
 int gitnv_state_new(GitnvState **out, char *current_dir) {
     GitnvState *z = malloc(sizeof(GitnvState));
     z->current_dir = current_dir;
@@ -12,7 +14,7 @@ int gitnv_state_new(GitnvState **out, char *current_dir) {
         free(z);
         return 1;
     }
-    debug_printf("Found git dir: %s", z->git_dir.ptr);
+    nklog_info("Found git dir: %s", z->git_dir.ptr);
 
     // Open the git repository with libgit2.
     if (git_repository_open(&z->repo, z->git_dir.ptr) != 0) {

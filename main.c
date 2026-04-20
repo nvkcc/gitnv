@@ -2,14 +2,14 @@
 #include <git2/repository.h>
 
 #include <cwalk.h>
-
-#define __USE_POSIX
+#include <nk_log.h>
 
 #include <stdio.h>
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include "bufread.h"
 #include "config.h"
 #include "debug.h"
 #include "state.h"
@@ -64,7 +64,7 @@ void create_cache_file(git_buf *git_dir) {
     FILE *f = fopen(cache_filepath, "w+");
     fwrite("HEYYYYYYYYYYYYYYYYYYYYYYYY", 10, 1, f);
     fclose(f);
-    debug_printf("%s", cache_filepath);
+    nklog_info("%s", cache_filepath);
 
     // The prefix to be pre-pended to every "git status" entry to make it such
     // that each one is relative to `git_dir`. Note that "git status" shows
@@ -73,17 +73,17 @@ void create_cache_file(git_buf *git_dir) {
 
     cwk_path_get_relative(git_dir->ptr, CURRENT_DIR, prefix,
                           GITNV_MAX_PATH_LEN);
-    debug_printf("%s", prefix);
+    nklog_info("%s", prefix);
     // cwk_path_get_relative(b, a, buf, GITNV_MAX_PATH_LEN);
-    // debug_printf("%s", buf);
+    // nklog_info("%s", buf);
 }
 
 int gitnv_status_update_cache(GitnvState *z, git_status_list *gsl) {
     int n = git_status_list_entrycount(gsl), i = 0;
     for (const git_status_entry *entry; i < n; ++i) {
         entry = git_status_byindex(gsl, i);
-        debug_printf("%s", entry->index_to_workdir->new_file.path);
-        debug_printf("%s", entry->index_to_workdir->old_file.path);
+        nklog_info("%s", entry->index_to_workdir->new_file.path);
+        nklog_info("%s", entry->index_to_workdir->old_file.path);
     }
 }
 
@@ -109,15 +109,9 @@ int gitnv_status(GitnvState *z) {
     } else {
         close(fd[1]);
     }
-    FILE *f = fdopen(fd[0], "r");
-    char readbuf[1024];
-    // fread();
-    // write();
-    // fwrite(;)
-    fgets(readbuf, 200, f);
     // read(fd[0]);
 
-    debug_printf("Running `git nv status!`", 0);
+    nklog_info("Running `git nv status!`", 0);
     git_status_list *gsl;
     git_status_options opts = GIT_STATUS_OPTIONS_INIT;
     opts.flags = GIT_STATUS_OPT_INCLUDE_UNTRACKED |
@@ -133,12 +127,12 @@ int gitnv_non_status(int argc, char *argv[], GitnvState *z) { return 0; }
 
 int main_inner(int argc, char *argv[]) {
     int err;
-    debug_printf("START EXECUTION", 0);
+    nklog_info("START EXECUTION", 0);
 
     for (int i = 0; i < argc; ++i) {
-        debug_printf("arg[%d] = %s", i, argv[i]);
+        nklog_info("arg[%d] = %s", i, argv[i]);
     }
-    debug_printf("CURRENT_DIR = %s", CURRENT_DIR);
+    nklog_info("CURRENT_DIR = %s", CURRENT_DIR);
     GitnvState *z;
     err = gitnv_state_new(&z, CURRENT_DIR);
     if (err != 0) {
@@ -159,7 +153,7 @@ int main_inner(int argc, char *argv[]) {
     //     if ((err = gather_aliases(config)) != 0) {
     //         SEND_STDOUT("gather_aliases failed.");
     //     } else {
-    //         debug_printf("Number of git aliases: %d", NUM_GIT_ALIASES);
+    //         nklog_info("Number of git aliases: %d", NUM_GIT_ALIASES);
     //     }
     //     git_config_free(config);
     // }
@@ -168,6 +162,18 @@ int main_inner(int argc, char *argv[]) {
 }
 
 int main(int argc, char *argv[]) {
+    int n = 128;
+    char buf[n];
+    gitnv_buf_reader br = {.buf = buf};
+    gitnv_buf_reader_new(&br, STDIN_FILENO, n);
+    int i = 0;
+    while (gitnv_buf_reader_next(&br) == 0) {
+        nklog_info("[%d] \x1b[33m|\x1b[m%s\x1b[33m|\x1b[m", ++i, buf);
+    }
+
+    nklog_trace("END");
+
+    return 0;
     argv[0] = "git";
     if (!getcwd(CURRENT_DIR, 1024)) {
         SEND_STDERR("Failed to get current working directory.");

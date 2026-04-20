@@ -4,13 +4,6 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#ifdef DEBUG
-#define debug_printf(format, ...)                                              \
-    fprintf(stderr, "[\x1b[32mINFO\x1b[m] " format "\n", __VA_ARGS__)
-#else
-#define debug_printf(...)
-#endif
-
 #define SEND_STDERR(msg) write(STDERR_FILENO, msg, sizeof(msg));
 #define SEND_STDERR_LN(msg) write(STDERR_FILENO, msg "\n", sizeof(msg) + 1);
 
