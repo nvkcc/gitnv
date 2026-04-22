@@ -238,22 +238,12 @@ int main_inner(int argc, char *argv[]) {
     // We only support enumerating the values of the vanilla `git nv status`
     // command for now. Nothing else.
     if (argc == 2 && strncmp(argv[1], "status", 6) == 0) {
-        return gitnv_status(z);
+        err = gitnv_status(z);
     } else {
-        gitnv_non_status(argc, argv, z);
+        err = gitnv_non_status(argc, argv, z);
     }
-    //     non_status_git_command(argc, argv, z);
-    //     git_config *config;
-    //     git_repository_config(&config, z->repo);
-    //     if ((err = gather_aliases(config)) != 0) {
-    //         SEND_STDOUT("gather_aliases failed.");
-    //     } else {
-    //         nklog_info("Number of git aliases: %d", NUM_GIT_ALIASES);
-    //     }
-    //     git_config_free(config);
-    // }
     gitnv_state_free(z);
-    return 0;
+    return err;
 }
 
 int main(int argc, char *argv[]) {
