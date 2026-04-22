@@ -4,4 +4,9 @@
 #define GITNV_MAX_PATH_LEN 1024
 #define GITNV_CACHE_FILENAME "gitnv.txt"
 
+#define GITNV_MAX_CACHE_NUMBER 20
+
+/// Operates on the assumption that X <= GITNV_MAX_CACHE_NUMBER.
+#define COUNT_DIGITS(X) (X <= 0 ? -1 : (X < 10 ? 1 : 2))
+
 #endif

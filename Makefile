@@ -1,7 +1,7 @@
 BUILD_DIR := target
 
 MAKEFILE_PATH := $(realpath $(lastword $(MAKEFILE_LIST)))
-MAKEFILE_DIR := $(dir $(MAKEFILE_PATH))
+MAKEFILE_DIR := $(realpath $(dir $(MAKEFILE_PATH)))
 
 VALGRIND_LOG := $(MAKEFILE_DIR)/valgrind-log-%p.txt
 
@@ -26,7 +26,7 @@ endif
 TEST_DIR := ~/repos
 TEST_DIR := ~/repos/Algebra/Algebra/DummitFoote
 
-current: test_bufreader
+current: test_status
 # current: run
 # current: v
 
@@ -38,6 +38,9 @@ build:
 
 test_bufreader: install
 	cat /home/khang/repos/Algebra/Algebra/DummitFoote/S02_E03_Cyclic_Groups_and_Subgroups.lean | git-nv
+
+test_status: install
+	git -C ~/repos/alatty nv status
 
 run: install
 	# ================================================================
@@ -55,7 +58,7 @@ v: install
 	-nvim valgrind-log*
 
 test: build
-	cd $(BUILD_DIR) && ctest
+	$(BUILD_DIR)/git-nv-test
 
 fmt:
 	git ls-files '*.c' '*.h' | xargs clang-format -i

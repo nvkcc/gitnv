@@ -2,6 +2,7 @@
 #include "config.h"
 #include "debug.h"
 #include "state.h"
+#include "util.h"
 #include <cwalk.h>
 #include <git2.h>
 #include <git2/repository.h>
@@ -15,8 +16,8 @@
 // Ban list.
 // 1. printf: in production we want zero allocations.
 #define BANNED(func) sorry__##func##__is_a_banned_function
-#undef printf
-#define printf(...) BANNED(strcpy)
+// #undef printf
+// #define printf(...) BANNED(strcpy)
 
 #define STARTS_WITH(haystack, prefix)                                          \
     (strncmp(haystack, prefix, sizeof(prefix) - 1) == 0)
@@ -109,11 +110,48 @@ int gitnv_status(GitnvState *z) {
         // Let stderr bypass by doing nothing to STDERR_FILENO.
         close(fd[0]);
         close(fd[1]);
-        execlp("git", "git", "status", NULL);
+        execlp("git", "git", "-c", "color.status=always", "status", NULL);
     } else {
         close(fd[1]);
     }
-    FILE *f = fdopen(fd[0], "rb");
+
+    char cache_filepath[GITNV_MAX_PATH_LEN];
+    cwk_path_join(z->git_dir.ptr, GITNV_CACHE_FILENAME, cache_filepath,
+                  GITNV_MAX_PATH_LEN);
+    FILE *cache_f = fopen(cache_filepath, "w+");
+    fwrite("HEYYYYYYYYYYYYYYYYYYYYYYYY", 10, 1, cache_f);
+    fclose(cache_f);
+
+    // 24kB cache buffer. To write to the file in one-shot later.
+    char cache_buffer[24 * 1024], *cache_ptr;
+
+    // The length of the current line of git status.
+    int n;
+    bool seen_untracked = 0;
+
+    FILE *status_f = fdopen(fd[0], "rb");
+    char status_buf[1024], *status_ptr;
+    for (int i = 1, l; i <= GITNV_MAX_CACHE_NUMBER;) {
+        status_ptr = status_buf + (l = COUNT_DIGITS(i) + 1);
+        if (fgets(status_ptr, 1024 - l, status_f) == NULL) {
+            break;
+        }
+        n = strlen(status_ptr);
+        seen_untracked |= STARTS_WITH(status_ptr, "Untracked files:");
+        // We only enumerate those lines that start with a '\t' character. Yes,
+        // amazingly this identifier for lines of interest works.
+        if (*status_ptr != '\t') {
+            write(STDOUT_FILENO, status_ptr, n);
+            continue;
+        }
+        snprintf(status_buf, l, "%d", i);
+        write(STDOUT_FILENO, status_buf, n + l);
+        n = uncolor(status_buf, n + l);
+        // write(STDOUT_FILENO, status_buf, n);
+        i++;
+        // Print the exact line out to STDOUT.
+    }
+
     // // read(fd[0]);
     //
     // nklog_info("Running `git nv status!`", 0);
@@ -167,18 +205,19 @@ int main_inner(int argc, char *argv[]) {
 }
 
 int main(int argc, char *argv[]) {
-    int n = 128;
-    char buf[n];
-    gitnv_buf_reader br = {.buf = buf};
-    gitnv_buf_reader_new(&br, STDIN_FILENO, n);
-    int i = 0;
-    while (gitnv_buf_reader_next(&br) == 0) {
-        nklog_info("[%d] \x1b[33m|\x1b[m%s\x1b[33m|\x1b[m", ++i, buf);
-    }
+    // int n = 128;
+    // char buf[n];
+    // gitnv_buf_reader br = {.buf = buf};
+    // gitnv_buf_reader_new(&br, STDIN_FILENO, n);
+    // int i = 0;
+    // while (gitnv_buf_reader_next(&br) == 0) {
+    //     nklog_info("[%d] \x1b[33m|\x1b[m%s\x1b[33m|\x1b[m", ++i, buf);
+    // }
+    //
+    // nklog_trace("END");
+    //
+    // return 0;
 
-    nklog_trace("END");
-
-    return 0;
     argv[0] = "git";
     if (!getcwd(CURRENT_DIR, 1024)) {
         SEND_STDERR("Failed to get current working directory.");
