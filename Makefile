@@ -26,7 +26,8 @@ endif
 TEST_DIR := ~/repos
 TEST_DIR := ~/repos/Algebra/Algebra/DummitFoote
 
-current: test_status
+current: test_add
+# current: test_status
 # current: run
 # current: v
 
@@ -41,6 +42,9 @@ test_bufreader: install
 
 test_status: install
 	git -C ~/repos/alatty/kittens/ask nv status
+
+test_add: install
+	git -C ~/repos/alatty/kittens/ask nv add thisfileshouldnotexist
 
 run: install
 	# ================================================================

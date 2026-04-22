@@ -218,7 +218,39 @@ int gitnv_status(GitnvState *z) {
     return 0;
 }
 
-int gitnv_non_status(int argc, char *argv[], GitnvState *z) { return 0; }
+int gitnv_non_status(int argc, char *argv[], GitnvState *z) {
+    char __cache_buf[GITNV_MAX_CACHE_NUMBER][GITNV_MAX_PATH_LEN];
+    char (*cache)[GITNV_MAX_CACHE_NUMBER][GITNV_MAX_PATH_LEN] = NULL;
+    int cache_len = 0;
+    {
+        // Get the path to the cache file.
+        char cache_filepath[GITNV_MAX_PATH_LEN], *ptr;
+        gitnv_state_get_cache_filepath(z, cache_filepath, GITNV_MAX_PATH_LEN);
+        FILE *cache_f;
+        int i = 1;
+        /// TODO: handle (properly) the case when `fopen()` fails.
+        if ((cache_f = fopen(cache_filepath, "r"))) {
+            for (int i = 0; i < GITNV_MAX_CACHE_NUMBER; ++i) {
+                if (fgets(__cache_buf[i], GITNV_MAX_PATH_LEN, cache_f) ==
+                    NULL) {
+                    break;
+                }
+                if ((ptr = memchr(__cache_buf[i], '\n', GITNV_MAX_PATH_LEN))) {
+                    *ptr = '\0';
+                }
+                printf("[%d] = %s\n", i, __cache_buf[i]);
+                cache_len = i + 1;
+            }
+            fclose(cache_f);
+            cache = &__cache_buf;
+        }
+    }
+    for (int i = 0; i < cache_len; ++i) {
+        printf("[%d] = %s\n", i, (*cache)[i]);
+    }
+
+    return 0;
+}
 
 int main_inner(int argc, char *argv[]) {
     int err;
