@@ -11,6 +11,8 @@ typedef struct {
 
 // @return 0 or an error code
 int gitnv_state_new(GitnvState **out, char *current_dir);
-void gitnv_state_free(GitnvState *state);
+void gitnv_state_free(GitnvState *);
+
+void gitnv_state_get_cache_filepath(GitnvState *, char *buf, int len);
 
 #endif

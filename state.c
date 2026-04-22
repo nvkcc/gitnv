@@ -1,5 +1,8 @@
 #include "state.h"
+#include "config.h"
 #include "debug.h"
+
+#include <cwalk.h>
 
 #include <nk_log.h>
 
@@ -33,4 +36,8 @@ void gitnv_state_free(GitnvState *state) {
     git_buf_free(&state->git_dir);
     git_repository_free(state->repo);
     free(state);
+}
+
+void gitnv_state_get_cache_filepath(GitnvState *z, char *buf, int len) {
+    cwk_path_join(z->git_dir.ptr, GITNV_CACHE_FILENAME, buf, len);
 }

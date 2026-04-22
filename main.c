@@ -115,16 +115,9 @@ int gitnv_status(GitnvState *z) {
         close(fd[1]);
     }
 
-    char cache_filepath[GITNV_MAX_PATH_LEN];
-    cwk_path_join(z->git_dir.ptr, GITNV_CACHE_FILENAME, cache_filepath,
-                  GITNV_MAX_PATH_LEN);
-    FILE *cache_f = fopen(cache_filepath, "w+");
-    fwrite("HEYYYYYYYYYYYYYYYYYYYYYYYY", 10, 1, cache_f);
-    fclose(cache_f);
-
     // 24kB cache buffer. To write to the file in one-shot later.
-    char cache_buffer[24 * 1024];
-    char *cache_ptr = cache_buffer;
+    char cache_buf[24 * 1024];
+    char *cache_ptr = cache_buf;
 
     // The length of the current line of git status.
     int n;
@@ -193,20 +186,17 @@ int gitnv_status(GitnvState *z) {
     if (*(cache_ptr - 1) == '\n') {
         *--cache_ptr = '\0';
     }
-    printf("%s\n", cache_buffer);
-    write(STDOUT_FILENO, cache_buffer, cache_ptr - cache_buffer);
+    printf("%s\n", cache_buf);
+    write(STDOUT_FILENO, cache_buf, cache_ptr - cache_buf);
 
-    // // read(fd[0]);
-    //
-    // nklog_info("Running `git nv status!`", 0);
-    // git_status_list *gsl;
-    // git_status_options opts = GIT_STATUS_OPTIONS_INIT;
-    // opts.flags = GIT_STATUS_OPT_INCLUDE_UNTRACKED |
-    //              GIT_STATUS_OPT_RENAMES_HEAD_TO_INDEX |
-    //              GIT_STATUS_OPT_SORT_CASE_SENSITIVELY;
-    // git_status_list_new(&gsl, z->repo, &opts);
-    // gitnv_status_update_cache(z, gsl);
-    // git_status_list_free(gsl);
+    char cache_filepath[GITNV_MAX_PATH_LEN];
+    gitnv_state_get_cache_filepath(z, cache_filepath, GITNV_MAX_PATH_LEN);
+
+    /// Write to the cache file.
+    FILE *cache_f = fopen(cache_filepath, "w");
+    fwrite(cache_buf, cache_ptr - cache_buf, 1, cache_f);
+    fclose(cache_f);
+
     return 0;
 }
 
