@@ -115,6 +115,13 @@ int gitnv_status(GitnvState *z) {
         close(fd[1]);
     }
 
+    // The prefix to be pre-pended to every "git status" entry to make it such
+    // that each one is relative to `git_dir`. Note that "git status" shows
+    // filepaths relative to the current working directory (`CURRENT_DIR`).
+    char prefix[GITNV_MAX_PATH_LEN];
+    cwk_path_get_relative(z->git_dir.ptr, CURRENT_DIR, prefix,
+                          GITNV_MAX_PATH_LEN);
+
     // 24kB cache buffer. To write to the file in one-shot later.
     char cache_buf[24 * 1024];
     char *cache_ptr = cache_buf;
@@ -180,19 +187,30 @@ int gitnv_status(GitnvState *z) {
             *++pathspec_end = '\n';
         }
         strncpy(cache_ptr, pathspec, (n = pathspec_end - pathspec + 1));
-        cache_ptr += n, i++;
+        *pathspec_end = '\0';
+        int remaining_space = sizeof(cache_buf) - (cache_ptr - cache_buf);
+        if (remaining_space < 0) {
+            perror("Cache buffer ran out of space. Recompile with more stack "
+                   "memory allocated.");
+            return 1;
+        }
+        /// Get the absolute path of the pathspec.
+        cwk_path_join(CURRENT_DIR, pathspec, cache_ptr, remaining_space);
+        /// Get the relative path of the pathspec with respect to the git-dir.
+        n = cwk_path_get_relative(z->git_dir.ptr, cache_ptr, cache_ptr,
+                                  remaining_space);
+        cache_ptr[n++] = '\n';
+        cache_ptr += n;
+        i++;
     }
-    // TODO: possible to remove.
-    if (*(cache_ptr - 1) == '\n') {
-        *--cache_ptr = '\0';
-    }
-    printf("%s\n", cache_buf);
-    write(STDOUT_FILENO, cache_buf, cache_ptr - cache_buf);
+
+    // write(STDOUT_FILENO, cache_buf, cache_ptr - cache_buf);
 
     char cache_filepath[GITNV_MAX_PATH_LEN];
     gitnv_state_get_cache_filepath(z, cache_filepath, GITNV_MAX_PATH_LEN);
 
     /// Write to the cache file.
+    /// TODO: handle the case when `fopen()` fails.
     FILE *cache_f = fopen(cache_filepath, "w");
     fwrite(cache_buf, cache_ptr - cache_buf, 1, cache_f);
     fclose(cache_f);

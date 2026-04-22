@@ -40,7 +40,7 @@ test_bufreader: install
 	cat /home/khang/repos/Algebra/Algebra/DummitFoote/S02_E03_Cyclic_Groups_and_Subgroups.lean | git-nv
 
 test_status: install
-	git -C ~/repos/alatty nv status
+	git -C ~/repos/alatty/kittens/ask nv status
 
 run: install
 	# ================================================================
