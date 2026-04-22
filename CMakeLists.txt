@@ -76,8 +76,5 @@ target_include_directories(git-nv-test PRIVATE "${libgit2_SOURCE_DIR}/include")
 target_link_libraries(git-nv      PRIVATE libgit2package cwalk nk_log)
 target_link_libraries(git-nv-test PRIVATE libgit2package cwalk GTest::gtest_main GTest::gmock_main nk_log)
 
-# Create compile_commands.json for clangd to latch on to.
-file(CREATE_LINK ${CMAKE_BINARY_DIR}/compile_commands.json compile_commands.json SYMBOLIC)
-
 # Install.
 install(TARGETS git-nv)
