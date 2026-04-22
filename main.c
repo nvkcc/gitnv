@@ -1,18 +1,16 @@
-#include <git2.h>
-#include <git2/repository.h>
-
-#include <cwalk.h>
-#include <nk_log.h>
-
-#include <stdio.h>
-#include <string.h>
-#include <sys/wait.h>
-#include <unistd.h>
-
 #include "bufread.h"
 #include "config.h"
 #include "debug.h"
 #include "state.h"
+#include <cwalk.h>
+#include <git2.h>
+#include <git2/repository.h>
+#include <nk_log.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 // Ban list.
 // 1. printf: in production we want zero allocations.
@@ -22,6 +20,17 @@
 
 #define STARTS_WITH(haystack, prefix)                                          \
     (strncmp(haystack, prefix, sizeof(prefix) - 1) == 0)
+
+#define PIPE_OR_RETURN(fd)                                                     \
+    if (pipe(fd) == -1) {                                                      \
+        perror("pipe failed");                                                 \
+        return 1;                                                              \
+    }
+#define FORK_OR_RETURN(pid)                                                    \
+    if ((pid = fork()) == -1) {                                                \
+        perror("fork failed");                                                 \
+        return 1;                                                              \
+    }
 
 static char CURRENT_DIR[GITNV_MAX_PATH_LEN];
 
@@ -91,14 +100,8 @@ int gitnv_status_update_cache(GitnvState *z, git_status_list *gsl) {
 int gitnv_status(GitnvState *z) {
     int fd[2];
     pid_t pid;
-    if (pipe(fd) == -1) {
-        SEND_STDERR_LN("Failed to start pipe for git status.");
-        return 1;
-    }
-    if ((pid = fork()) == -1) {
-        SEND_STDERR_LN("Failed to fork for git status.");
-        return 1;
-    }
+    PIPE_OR_RETURN(fd);
+    FORK_OR_RETURN(pid);
     if (pid == 0) {
         // Capture `git status` STDOUT.
         dup2(fd[1], STDOUT_FILENO);
@@ -109,17 +112,17 @@ int gitnv_status(GitnvState *z) {
     } else {
         close(fd[1]);
     }
-    // read(fd[0]);
-
-    nklog_info("Running `git nv status!`", 0);
-    git_status_list *gsl;
-    git_status_options opts = GIT_STATUS_OPTIONS_INIT;
-    opts.flags = GIT_STATUS_OPT_INCLUDE_UNTRACKED |
-                 GIT_STATUS_OPT_RENAMES_HEAD_TO_INDEX |
-                 GIT_STATUS_OPT_SORT_CASE_SENSITIVELY;
-    git_status_list_new(&gsl, z->repo, &opts);
-    gitnv_status_update_cache(z, gsl);
-    git_status_list_free(gsl);
+    // // read(fd[0]);
+    //
+    // nklog_info("Running `git nv status!`", 0);
+    // git_status_list *gsl;
+    // git_status_options opts = GIT_STATUS_OPTIONS_INIT;
+    // opts.flags = GIT_STATUS_OPT_INCLUDE_UNTRACKED |
+    //              GIT_STATUS_OPT_RENAMES_HEAD_TO_INDEX |
+    //              GIT_STATUS_OPT_SORT_CASE_SENSITIVELY;
+    // git_status_list_new(&gsl, z->repo, &opts);
+    // gitnv_status_update_cache(z, gsl);
+    // git_status_list_free(gsl);
     return 0;
 }
 
@@ -143,7 +146,7 @@ int main_inner(int argc, char *argv[]) {
     // We only support enumerating the values of the vanilla `git nv status`
     // command for now. Nothing else.
     if (argc == 2 && strncmp(argv[1], "status", 6) == 0) {
-        gitnv_status(z);
+        return gitnv_status(z);
     } else {
         gitnv_non_status(argc, argv, z);
     }
