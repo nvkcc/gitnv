@@ -3,7 +3,9 @@ cmake_policy(SET CMP0135 OLD)
 
 project(git-nv LANGUAGES C CXX)
 
-set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD 17)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS ON) # this line is so that we get gnu17 -> get fdopen().
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_C_FLAGS "-O3")
 set(CMAKE_INSTALL_PREFIX /usr/local)

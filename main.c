@@ -94,6 +94,7 @@ int gitnv_status_update_cache(GitnvState *z, git_status_list *gsl) {
         nklog_info("%s", entry->index_to_workdir->new_file.path);
         nklog_info("%s", entry->index_to_workdir->old_file.path);
     }
+    return 0;
 }
 
 /// The custom opinionated `git-nv status` output.
@@ -112,6 +113,7 @@ int gitnv_status(GitnvState *z) {
     } else {
         close(fd[1]);
     }
+    FILE *f = fdopen(fd[0], "rb");
     // // read(fd[0]);
     //
     // nklog_info("Running `git nv status!`", 0);
