@@ -3,11 +3,18 @@
 #include "test_printer.h"
 #include "util.h"
 
-TEST(Util, Uncolor) {
+TEST(Util, Uncolor1) {
     char x[] = "hello\x1b[33mthere\x1b[m";
     int y = uncolor(x, sizeof(x));
     EXPECT_STREQ(x, "hellothere");
     EXPECT_EQ(y, sizeof("hellothere"));
+}
+
+TEST(Util, Uncolor2) {
+    char x[] = "\t\x1b[31mmodified:\tbuild.py\x1b[m\n";
+    int y = uncolor(x, sizeof(x));
+    EXPECT_STREQ(x, "\tmodified:\tbuild.py\n");
+    EXPECT_EQ(y, sizeof("\tmodified:\tbuild.py\n"));
 }
 
 TEST(HelloTest, BasicAssertions) {

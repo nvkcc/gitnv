@@ -123,7 +123,8 @@ int gitnv_status(GitnvState *z) {
     fclose(cache_f);
 
     // 24kB cache buffer. To write to the file in one-shot later.
-    char cache_buffer[24 * 1024], *cache_ptr;
+    char cache_buffer[24 * 1024];
+    char *cache_ptr = cache_buffer;
 
     // The length of the current line of git status.
     int n;
@@ -146,11 +147,54 @@ int gitnv_status(GitnvState *z) {
         }
         snprintf(status_buf, l, "%d", i);
         write(STDOUT_FILENO, status_buf, n + l);
-        n = uncolor(status_buf, n + l);
-        // write(STDOUT_FILENO, status_buf, n);
-        i++;
-        // Print the exact line out to STDOUT.
+        n = uncolor(status_ptr, n);
+        // Now, on to parsing the line.
+        // https://libgit2.org/docs/reference/main/status/git_status_t.html
+
+        // Example:
+        // ```
+        // Changes not staged for commit:
+        // 1       modified:   core/status.rs
+        //
+        // Untracked files:
+        // 2       core/line.rs
+        // ```
+
+        /// "modified", "deleted", "renamed", ...
+        char *change_type = NULL;
+        /// +1 char to skip the '\t' character.
+        char *pathspec;
+        char *pathspec_end = &status_ptr[n - 1];
+
+        if (!seen_untracked) {
+            change_type = status_ptr + 1; // +1 to skip the '\t' char.
+            pathspec = memchr(change_type, ':', 16);
+            *(pathspec++) = '\0';
+            pathspec += strspn(pathspec, " \r\t");
+        } else {
+            pathspec = status_ptr + 1; // +1 to skip the '\t' char.
+        }
+
+        // Example:
+        // ```
+        // Changes to be committed:
+        // 1       renamed:    README.md -> BUILD.md
+        // ```
+        if (change_type && STARTS_WITH(change_type, "renamed")) {
+            pathspec_end = memmem(pathspec, pathspec_end - pathspec, "->", 2);
+            while (*--pathspec_end == ' ') {
+            }
+            *++pathspec_end = '\n';
+        }
+        strncpy(cache_ptr, pathspec, (n = pathspec_end - pathspec + 1));
+        cache_ptr += n, i++;
     }
+    // TODO: possible to remove.
+    if (*(cache_ptr - 1) == '\n') {
+        *--cache_ptr = '\0';
+    }
+    printf("%s\n", cache_buffer);
+    write(STDOUT_FILENO, cache_buffer, cache_ptr - cache_buffer);
 
     // // read(fd[0]);
     //
