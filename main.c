@@ -219,10 +219,10 @@ int gitnv_non_status(int argc, char *argv[], GitnvState *z) {
         // Get the path to the cache file.
         char cache_filepath[GITNV_MAX_PATH_LEN];
         gitnv_state_get_cache_filepath(z, cache_filepath, GITNV_MAX_PATH_LEN);
-        FILE *cache_f;
         log_info("Initializing cache...");
+        FILE *cache_f = fopen(cache_filepath, "r");
         /// TODO: handle (properly) the case when `fopen()` fails.
-        if ((cache_f = fopen(cache_filepath, "r"))) {
+        if (cache_f) {
             gitnv_cache_load(cache, cache_f);
             fclose(cache_f);
         }
@@ -230,13 +230,15 @@ int gitnv_non_status(int argc, char *argv[], GitnvState *z) {
         // unsigned int n = gitnv_cache_len(cache), i;
         // for (i = 0; i < n; ++i) {
         //     char *p = gitnv_cache_get_checked(cache, i);
-        //     if (p != NULL) {
-        //         printf("[%d] %s\n", i, p);
-        //     } else {
-        //         printf("[%d]\n", i);
-        //     }
+        //     if (p != NULL) { printf("[%d] %s\n", i, p); }
         // }
     }
+
+    int total_args = argc;
+    for (int i = 0; i < argc; ++i) {
+        printf("[%d] %s\n", i, argv[i]);
+    }
+
     gitnv_cache_free(cache);
 
     return 0;

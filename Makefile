@@ -44,7 +44,7 @@ test_status: install
 	git -C ~/repos/alatty/kittens/ask nv status
 
 test_add: install
-	git -C ~/repos/alatty/kittens/ask nv add thisfileshouldnotexist
+	git -C ~/repos/alatty/kittens/ask nv add thisfileshouldnotexist 3 1 2..7
 
 run: install
 	# ================================================================
