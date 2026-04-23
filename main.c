@@ -212,46 +212,6 @@ int gitnv_status(GitnvState *z) {
     return 0;
 }
 
-/// Gets the additional number of argument this this argument expands out to.
-/// "3"    -> 1
-/// "8"    -> 1
-/// "2..7" -> 6
-/// "3..6" -> 4
-/// "0..3" -> 1 (because 0 is an invalid index, so we treat that as a pathspec)
-/// "0"    -> 1
-/// "6..6" -> 1
-/// "6..5" -> 1 (valid range but empty. So we'll treat that as a pathspec)
-///
-/// Since arg is guaranteed to come from `argv`, it is also guaranteed to be NUL
-/// terminated.
-int num_args(const char *arg, int64_t *cache_mask) {
-    /// Length of `arg` without the NUL byte.
-    int n = strlen(arg);
-    char *dots;
-    // Try to search for the ".." substring in the arg.
-    if ((dots = memmem(arg, n, "..", 2)) == NULL) {
-        // Either a regular pathspec, or a single number.
-        n = atoi(arg);
-        if (GITNV_IS_VALID_USER_INPUT_NUMBER(n)) {
-            *cache_mask |= 1 << (n - 1);
-        }
-        return 1;
-    }
-    // Convert both the substrings on the left and right of the ".." to
-    // integers. For that we need a NUL byte to be strategically placed.
-    *dots = '\0';
-    const int left = atoi(arg), right = atoi(dots + 2);
-    *dots = '.';
-    if (left == 0 || !GITNV_IS_VALID_USER_INPUT_NUMBER(right) || right < left) {
-        // Treat the arg like a regular pathspec.
-        return 1;
-    }
-    for (n = left; n <= right; ++n) {
-        *cache_mask |= (1 << n);
-    }
-    return right - left + 1;
-}
-
 int gitnv_non_status(int argc, char *argv[], GitnvState *z) {
     GitnvCache *cache;
     gitnv_cache_new(&cache);
@@ -274,12 +234,13 @@ int gitnv_non_status(int argc, char *argv[], GitnvState *z) {
         // }
     }
 
-    int total_args = argc;
+    uint64_t cache_mask = 0;
+    int total_args = 0;
+    total_args += 1; // for the binary path.
     total_args += 1; // for the NULL at the end.
 
-    for (int i = 0; i < argc; ++i) {
-        isdigit(argv[i]);
-        printf("[%d] %s\n", i, argv[i]);
+    for (int i = 1; i < argc; ++i) {
+        total_args += parse_args(argv[i], &cache_mask);
     }
 
     gitnv_cache_free(cache);

@@ -36,14 +36,16 @@ FetchContent_Declare(
   URL https://github.com/likle/cwalk/archive/f45a23a13abf39d94b347d7c83810eca26a5a8d0.zip # v1.2.9
 )
 FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/52eb8108c5bdec04579160ae17225d66034bd723.zip # 1.17.0
+  nk_test
+  GIT_REPOSITORY https://github.com/nvkcc/nk_test
+  GIT_TAG        9b5e86dee066dfce8db73f007f68946adadbe74b
+  DOWNLOAD_EXTRACT_TIMESTAMP false
 )
 
 # (Google Test) For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
-FetchContent_MakeAvailable(libgit2 cwalk googletest)
+FetchContent_MakeAvailable(libgit2 cwalk nk_test)
 # ==============================================================================
 
 set(GITNV_SOURCES
@@ -65,7 +67,7 @@ target_compile_definitions(git-nv PUBLIC DEBUG_MODE)
 target_include_directories(git-nv      PRIVATE "${libgit2_SOURCE_DIR}/include")
 target_include_directories(git-nv-test PRIVATE "${libgit2_SOURCE_DIR}/include")
 target_link_libraries(git-nv      PRIVATE libgit2package cwalk)
-target_link_libraries(git-nv-test PRIVATE libgit2package cwalk GTest::gtest_main GTest::gmock_main)
+target_link_libraries(git-nv-test PRIVATE libgit2package cwalk GTest::gtest_main GTest::gmock_main nk_test)
 
 # Install.
 install(TARGETS git-nv)

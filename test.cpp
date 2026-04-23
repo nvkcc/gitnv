@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "test_printer.h"
+#include <nk_test_printer.h>
+
 #include "util.h"
 
 TEST(Util, Uncolor1) {
@@ -17,11 +18,22 @@ TEST(Util, Uncolor2) {
     EXPECT_EQ(y, sizeof("\tmodified:\tbuild.py\n"));
 }
 
-TEST(HelloTest, BasicAssertions) {
-    // Expect two strings not to be equal.
-    EXPECT_STRNE("hello", "world");
-    // Expect equality.
-    EXPECT_EQ(7 * 6, 42);
+TEST(Util, ParseArgs) {
+#define TEST_PARSE(ARG, NUM_ARGS, MASK)                                        \
+    {                                                                          \
+        char arg[] = ARG;                                                      \
+        uint64_t __mask = 0;                                                   \
+        ASSERT_EQ(parse_args(arg, &__mask), NUM_ARGS);                         \
+        ASSERT_EQ(__mask, MASK);                                               \
+    }
+    TEST_PARSE("3", 1, 0b100);
+    TEST_PARSE("8", 1, 0b10000000);
+    TEST_PARSE("0", 1, 0);
+    TEST_PARSE("2..7", 6, 0b1111110);
+    TEST_PARSE("3..11", 9, 0b11111111100);
+    TEST_PARSE("6..6", 1, 0b100000);
+    TEST_PARSE("6..5", 1, 0);
+#undef TEST_PARSE
 }
 
 int main(int argc, char **argv) {
@@ -29,7 +41,7 @@ int main(int argc, char **argv) {
     testing::TestEventListeners &listeners =
         testing::UnitTest::GetInstance()->listeners();
     delete listeners.Release(listeners.default_result_printer());
-    listeners.Append(new MinimalistPrinter);
+    listeners.Append(new NkTestPrinter);
 
     testing::InitGoogleTest(&argc, argv);
 
