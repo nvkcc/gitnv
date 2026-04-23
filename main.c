@@ -212,7 +212,7 @@ int gitnv_status(GitnvState *z) {
     return 0;
 }
 
-int gitnv_non_status(int argc, char *argv[], GitnvState *z) {
+pid_t gitnv_non_status(int argc, char *argv[], GitnvState *z) {
     GitnvCache *cache;
     gitnv_cache_new(&cache);
     {
@@ -296,7 +296,15 @@ int gitnv_non_status(int argc, char *argv[], GitnvState *z) {
     log_info("Git non-status function exited!");
 #endif
 
-    return 0;
+    pid_t pid;
+    if ((pid = fork()) == 0) {
+        // TODO: handle the failure case.
+        execvp("git", args);
+
+        return pid;
+    }
+
+    return pid;
 }
 
 int main_inner(int argc, char *argv[]) {
@@ -319,7 +327,10 @@ int main_inner(int argc, char *argv[]) {
     if (argc == 2 && strncmp(argv[1], "status", 6) == 0) {
         err = gitnv_status(z);
     } else {
-        err = gitnv_non_status(argc, argv, z);
+        pid_t pid = gitnv_non_status(argc, argv, z);
+        if (pid != 0) {
+            waitpid(pid, NULL, 0);
+        }
     }
     gitnv_state_free(z);
     return err;
