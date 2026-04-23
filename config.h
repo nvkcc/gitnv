@@ -3,6 +3,8 @@
 
 #define GITNV_MAX_PATH_LEN 1024
 #define GITNV_CACHE_FILENAME "gitnv.txt"
+#define GITNV_ALIAS_MAX_LEN 16
+#define GITNV_MAX_ALIASES 10
 
 /// Feel free to change this to any value between 1 and 64 inclusive.
 #define GITNV_MAX_CACHE_NUMBER 20

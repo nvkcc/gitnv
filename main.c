@@ -19,10 +19,8 @@
 
 static char CURRENT_DIR[GITNV_MAX_PATH_LEN];
 
-#define GIT_ALIAS_MAX_LEN 16
-#define MAX_GIT_ALIASES 10
-static char GIT_ALIASES[MAX_GIT_ALIASES][2][GIT_ALIAS_MAX_LEN];
-static int GIT_ALIASES_LEN[MAX_GIT_ALIASES][2];
+static char GIT_ALIASES[GITNV_MAX_ALIASES][2][GITNV_ALIAS_MAX_LEN];
+static int GIT_ALIASES_LEN[GITNV_MAX_ALIASES][2];
 static int NUM_GIT_ALIASES;
 
 int gather_aliases(git_config *config) {
@@ -32,13 +30,13 @@ int gather_aliases(git_config *config) {
     git_config_entry *entry;
     for (; (err = git_config_next(&entry, it)) != GIT_ITEROVER; i++) {
         // TODO: handle the `err`.
-        if (i == MAX_GIT_ALIASES) {
+        if (i == GITNV_MAX_ALIASES) {
             SEND_STDERR("Exceeded maximum number of git aliases.");
             return 1;
         }
         key_len = strlen(entry->name);
         val_len = strlen(entry->value);
-        if (key_len > GIT_ALIAS_MAX_LEN || val_len > GIT_ALIAS_MAX_LEN) {
+        if (key_len > GITNV_ALIAS_MAX_LEN || val_len > GITNV_ALIAS_MAX_LEN) {
             SEND_STDERR("There is a git alias that is longer than the maximum "
                         "length allowed.");
             return 1;
