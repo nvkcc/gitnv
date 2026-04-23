@@ -22,4 +22,6 @@ void gitnv_state_get_prefix(GitnvState *, char *buffer, int len);
 int gitnv_state_resolve_pathspec(GitnvState *, char *pathspec, char *buffer,
                                  int len);
 
+char *gitnv_state_git_dir(GitnvState *);
+
 #endif

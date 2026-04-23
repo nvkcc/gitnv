@@ -58,3 +58,5 @@ int gitnv_state_resolve_pathspec(GitnvState *z, char *pathspec, char *buffer,
     /// Get the relative path of the pathspec with respect to the git-dir.
     return cwk_path_get_relative(z->git_dir.ptr, buffer, buffer, len);
 }
+
+char *gitnv_state_git_dir(GitnvState *z) { return z->git_dir.ptr; }

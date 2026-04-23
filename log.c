@@ -20,7 +20,9 @@
  * IN THE SOFTWARE.
  */
 
+#ifndef DEBUG_MODE
 #define DEBUG_MODE
+#endif
 #include "log.h"
 
 #define MAX_CALLBACKS 32

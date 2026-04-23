@@ -19,7 +19,7 @@ char *gitnv_cache_get_raw(GitnvCache *, unsigned int);
 char *gitnv_cache_get_checked(GitnvCache *, unsigned int);
 
 /// Loads the cache from a cache file.
-void gitnv_cache_load(GitnvCache *, FILE *);
+void gitnv_cache_load(GitnvCache *, char *git_dir, FILE *);
 
 /// Number of items in the cache.
 unsigned int gitnv_cache_len(GitnvCache *);

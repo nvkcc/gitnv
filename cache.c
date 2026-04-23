@@ -1,5 +1,7 @@
 #include "cache.h"
 #include "config.h"
+#include "log.h"
+#include <cwalk.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -30,19 +32,23 @@ char *gitnv_cache_get_checked(GitnvCache *z, unsigned int index) {
     return z->entries[index];
 }
 
-void gitnv_cache_load(GitnvCache *z, FILE *cache_f) {
+void gitnv_cache_load(GitnvCache *z, char *git_dir, FILE *cache_f) {
+    char pathspec[GITNV_MAX_PATH_LEN];
     char *ptr;
     int i;
     for (i = 0; i < GITNV_MAX_CACHE_NUMBER; ++i) {
-        if (fgets(z->entries[i], GITNV_MAX_PATH_LEN, cache_f) == NULL) {
+        if (fgets(pathspec, GITNV_MAX_PATH_LEN, cache_f) == NULL) {
             break;
         }
-        printf("[+%d] %s", i + 1, z->entries[i]);
-        // Successful insertion.
+        // Will be inserting.
         z->len = i + 1;
-        if ((ptr = memchr(z->entries[i], '\n', GITNV_MAX_PATH_LEN))) {
+        if ((ptr = memchr(pathspec, '\n', GITNV_MAX_PATH_LEN))) {
             *ptr = '\0';
         }
+        log_trace("[+%d] %s", i + 1, pathspec);
+        // However, `pathspec` is relative to the git directory. We shall
+        // resolve it to its absolute path.
+        cwk_path_join(git_dir, pathspec, z->entries[i], GITNV_MAX_PATH_LEN);
     }
 }
 

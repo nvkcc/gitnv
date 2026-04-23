@@ -223,7 +223,7 @@ pid_t gitnv_non_status(int argc, char *argv[], GitnvState *z) {
         FILE *cache_f = fopen(cache_filepath, "r");
         /// TODO: handle (properly) the case when `fopen()` fails.
         if (cache_f) {
-            gitnv_cache_load(cache, cache_f);
+            gitnv_cache_load(cache, gitnv_state_git_dir(z), cache_f);
             fclose(cache_f);
         }
         log_info("Cache initialized!");
