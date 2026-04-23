@@ -1,4 +1,3 @@
-#include "bufread.h"
 #include "cache.h"
 #include "config.h"
 #include "debug.h"
@@ -6,9 +5,6 @@
 #include "state.h"
 #include "util.h"
 #include <cwalk.h>
-#include <git2.h>
-#include <git2/repository.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/wait.h>

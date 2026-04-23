@@ -41,7 +41,6 @@ FetchContent_MakeAvailable(libgit2 cwalk)
 
 set(GITNV_SOURCES
     "${CMAKE_SOURCE_DIR}/gitnv.c"
-    "${CMAKE_SOURCE_DIR}/kstr.c"
     "${CMAKE_SOURCE_DIR}/state.c"
     "${CMAKE_SOURCE_DIR}/util.c"
     "${CMAKE_SOURCE_DIR}/cache.c"

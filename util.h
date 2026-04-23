@@ -12,6 +12,9 @@
         return 1;                                                              \
     }
 
+#define STARTS_WITH(haystack, prefix)                                          \
+    (strncmp(haystack, prefix, sizeof(prefix) - 1) == 0)
+
 #ifdef __cplusplus
 extern "C" {
 #endif
