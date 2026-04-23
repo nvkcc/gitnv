@@ -1,12 +1,13 @@
 #include "bufread.h"
+#include "cache.h"
 #include "config.h"
 #include "debug.h"
+#include "log.h"
 #include "state.h"
 #include "util.h"
 #include <cwalk.h>
 #include <git2.h>
 #include <git2/repository.h>
-#include <nk_log.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -74,7 +75,7 @@ void create_cache_file(git_buf *git_dir) {
     FILE *f = fopen(cache_filepath, "w+");
     fwrite("HEYYYYYYYYYYYYYYYYYYYYYYYY", 10, 1, f);
     fclose(f);
-    nklog_info("%s", cache_filepath);
+    log_info("%s", cache_filepath);
 
     // The prefix to be pre-pended to every "git status" entry to make it such
     // that each one is relative to `git_dir`. Note that "git status" shows
@@ -83,17 +84,17 @@ void create_cache_file(git_buf *git_dir) {
 
     cwk_path_get_relative(git_dir->ptr, CURRENT_DIR, prefix,
                           GITNV_MAX_PATH_LEN);
-    nklog_info("%s", prefix);
+    log_info("%s", prefix);
     // cwk_path_get_relative(b, a, buf, GITNV_MAX_PATH_LEN);
-    // nklog_info("%s", buf);
+    // log_info("%s", buf);
 }
 
 int gitnv_status_update_cache(GitnvState *z, git_status_list *gsl) {
     int n = git_status_list_entrycount(gsl), i = 0;
     for (const git_status_entry *entry; i < n; ++i) {
         entry = git_status_byindex(gsl, i);
-        nklog_info("%s", entry->index_to_workdir->new_file.path);
-        nklog_info("%s", entry->index_to_workdir->old_file.path);
+        log_info("%s", entry->index_to_workdir->new_file.path);
+        log_info("%s", entry->index_to_workdir->old_file.path);
     }
     return 0;
 }
@@ -212,47 +213,43 @@ int gitnv_status(GitnvState *z) {
 }
 
 int gitnv_non_status(int argc, char *argv[], GitnvState *z) {
-    char __cache_buf[GITNV_MAX_CACHE_NUMBER][GITNV_MAX_PATH_LEN];
-    char (*cache)[GITNV_MAX_CACHE_NUMBER][GITNV_MAX_PATH_LEN] = NULL;
-    int cache_len = 0;
+    GitnvCache *cache;
+    gitnv_cache_new(&cache);
     {
         // Get the path to the cache file.
-        char cache_filepath[GITNV_MAX_PATH_LEN], *ptr;
+        char cache_filepath[GITNV_MAX_PATH_LEN];
         gitnv_state_get_cache_filepath(z, cache_filepath, GITNV_MAX_PATH_LEN);
         FILE *cache_f;
-        int i = 1;
+        log_info("Initializing cache...");
         /// TODO: handle (properly) the case when `fopen()` fails.
         if ((cache_f = fopen(cache_filepath, "r"))) {
-            for (int i = 0; i < GITNV_MAX_CACHE_NUMBER; ++i) {
-                if (fgets(__cache_buf[i], GITNV_MAX_PATH_LEN, cache_f) ==
-                    NULL) {
-                    break;
-                }
-                if ((ptr = memchr(__cache_buf[i], '\n', GITNV_MAX_PATH_LEN))) {
-                    *ptr = '\0';
-                }
-                printf("[%d] = %s\n", i, __cache_buf[i]);
-                cache_len = i + 1;
-            }
+            gitnv_cache_load(cache, cache_f);
             fclose(cache_f);
-            cache = &__cache_buf;
         }
+        log_info("Cache initialized!");
+        // unsigned int n = gitnv_cache_len(cache), i;
+        // for (i = 0; i < n; ++i) {
+        //     char *p = gitnv_cache_get_checked(cache, i);
+        //     if (p != NULL) {
+        //         printf("[%d] %s\n", i, p);
+        //     } else {
+        //         printf("[%d]\n", i);
+        //     }
+        // }
     }
-    for (int i = 0; i < cache_len; ++i) {
-        printf("[%d] = %s\n", i, (*cache)[i]);
-    }
+    gitnv_cache_free(cache);
 
     return 0;
 }
 
 int main_inner(int argc, char *argv[]) {
     int err;
-    nklog_info("START EXECUTION", 0);
+    log_info("START EXECUTION", 0);
 
     for (int i = 0; i < argc; ++i) {
-        nklog_info("arg[%d] = %s", i, argv[i]);
+        log_info("arg[%d] = %s", i, argv[i]);
     }
-    nklog_info("CURRENT_DIR = %s", CURRENT_DIR);
+    log_info("CURRENT_DIR = %s", CURRENT_DIR);
     GitnvState *z;
     err = gitnv_state_new(&z, CURRENT_DIR);
     if (err != 0) {
@@ -272,16 +269,17 @@ int main_inner(int argc, char *argv[]) {
 }
 
 int main(int argc, char *argv[]) {
+    log_set_level(LOG_TRACE);
     // int n = 128;
     // char buf[n];
     // gitnv_buf_reader br = {.buf = buf};
     // gitnv_buf_reader_new(&br, STDIN_FILENO, n);
     // int i = 0;
     // while (gitnv_buf_reader_next(&br) == 0) {
-    //     nklog_info("[%d] \x1b[33m|\x1b[m%s\x1b[33m|\x1b[m", ++i, buf);
+    //     log_info("[%d] \x1b[33m|\x1b[m%s\x1b[33m|\x1b[m", ++i, buf);
     // }
     //
-    // nklog_trace("END");
+    // log_trace("END");
     //
     // return 0;
 

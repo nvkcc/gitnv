@@ -26,7 +26,7 @@ endif
 TEST_DIR := ~/repos
 TEST_DIR := ~/repos/Algebra/Algebra/DummitFoote
 
-current: test_add
+current: test_status test_add
 # current: test_status
 # current: run
 # current: v

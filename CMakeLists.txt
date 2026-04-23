@@ -39,25 +39,20 @@ FetchContent_Declare(
   googletest
   URL https://github.com/google/googletest/archive/52eb8108c5bdec04579160ae17225d66034bd723.zip # 1.17.0
 )
-FetchContent_Declare(
-  nk_log
-  GIT_REPOSITORY https://github.com/nvkcc/nk_log
-  GIT_TAG        d29e6da6d7caefe26d7b628afc9233dd3d6615b9
-)
 
 # (Google Test) For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
-FetchContent_MakeAvailable(libgit2 cwalk googletest nk_log)
+FetchContent_MakeAvailable(libgit2 cwalk googletest)
 # ==============================================================================
-
-include("./.github/colors.cmake")
 
 set(GITNV_SOURCES
     "${CMAKE_SOURCE_DIR}/gitnv.c"
     "${CMAKE_SOURCE_DIR}/kstr.c"
     "${CMAKE_SOURCE_DIR}/state.c"
     "${CMAKE_SOURCE_DIR}/util.c"
+    "${CMAKE_SOURCE_DIR}/cache.c"
+    "${CMAKE_SOURCE_DIR}/log.c"
 )
 
 enable_testing()
@@ -65,18 +60,12 @@ add_executable(git-nv "${CMAKE_SOURCE_DIR}/main.c" ${GITNV_SOURCES})
 add_executable(git-nv-test "${CMAKE_SOURCE_DIR}/test.cpp" ${GITNV_SOURCES})
 include(GoogleTest)
 
-# Define the macro `#define DEBUG` if the build type is set to "Debug".
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(log_level INFO)
-    target_compile_definitions(git-nv      PUBLIC DEBUG NK_LOG_LEVEL=nk${log_level})
-    target_compile_definitions(git-nv-test PUBLIC DEBUG NK_LOG_LEVEL=nk${log_level})
-    message(STATUS "${Yellow}Building git-nv in debug mode.${ColourReset}")
-endif()
+target_compile_definitions(git-nv PUBLIC DEBUG_MODE)
 
 target_include_directories(git-nv      PRIVATE "${libgit2_SOURCE_DIR}/include")
 target_include_directories(git-nv-test PRIVATE "${libgit2_SOURCE_DIR}/include")
-target_link_libraries(git-nv      PRIVATE libgit2package cwalk nk_log)
-target_link_libraries(git-nv-test PRIVATE libgit2package cwalk GTest::gtest_main GTest::gmock_main nk_log)
+target_link_libraries(git-nv      PRIVATE libgit2package cwalk)
+target_link_libraries(git-nv-test PRIVATE libgit2package cwalk GTest::gtest_main GTest::gmock_main)
 
 # Install.
 install(TARGETS git-nv)

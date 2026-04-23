@@ -1,10 +1,9 @@
 #include "state.h"
 #include "config.h"
 #include "debug.h"
+#include "log.h"
 
 #include <cwalk.h>
-
-#include <nk_log.h>
 
 typedef struct GitnvState {
     git_buf git_dir;
@@ -23,7 +22,7 @@ int gitnv_state_new(GitnvState **out, char *current_dir) {
         free(z);
         return 1;
     }
-    nklog_info("Found git dir: %s", z->git_dir.ptr);
+    log_info("Found git dir: %s", z->git_dir.ptr);
 
     // Open the git repository with libgit2.
     if (git_repository_open(&z->repo, z->git_dir.ptr) != 0) {

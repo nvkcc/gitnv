@@ -1,6 +1,6 @@
 #include "debug.h"
+#include "log.h"
 
-#include <nk_log.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -72,7 +72,7 @@ int gitnv_buf_reader_next(gitnv_buf_reader *r) {
     }
     // At this point, `r->newl == NULL`, and so there is no newline found.
 
-    nklog_trace("EOB after shift = %d", (int)(r->end_of_buf - r->buf));
+    log_trace("EOB after shift = %d", (int)(r->end_of_buf - r->buf));
 
     n = r->buf_len - (r->end_of_buf - r->buf) - 1;
     if (n == 0) {
@@ -83,26 +83,26 @@ int gitnv_buf_reader_next(gitnv_buf_reader *r) {
 
     n = read(r->fd, r->end_of_buf, n);
     if (n == 0) {
-        nklog_trace("End of file! (n = %d)", n);
+        log_trace("End of file! (n = %d)", n);
         // Successful read, and reached end of file.
         return -1;
     } else if (n == -1) {
-        nklog_trace("Error! (n = %d)", n);
+        log_trace("Error! (n = %d)", n);
         // `read` has set errno to indicate the error.
         return -1;
     }
     r->end_of_buf += n;
     *r->end_of_buf = '\0';
 
-    nklog_trace("Executed `read`, bytes read = %d", n);
-    nklog_trace("EOB after read = %d", (int)(r->end_of_buf - r->buf));
+    log_trace("Executed `read`, bytes read = %d", n);
+    log_trace("EOB after read = %d", (int)(r->end_of_buf - r->buf));
 
     r->newl = memchr(r->buf, '\n', r->end_of_buf - r->buf);
     if (r->newl) {
-        nklog_trace("Found newline!");
+        log_trace("Found newline!");
         *r->newl = '\0';
     } else {
-        nklog_trace("No newline immediately after read!");
+        log_trace("No newline immediately after read!");
     }
 
     return 0;

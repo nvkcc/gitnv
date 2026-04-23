@@ -1,12 +1,12 @@
-#ifndef _GITNV_STATE_H
-#define _GITNV_STATE_H 1
+#ifndef cf0f82475234c08cfbd852c348414d092b577fa0
+#define cf0f82475234c08cfbd852c348414d092b577fa0 1
 
 #include <git2.h>
 
 typedef struct GitnvState GitnvState;
 
 // @return 0 or an error code
-int gitnv_state_new(GitnvState **out, char *current_dir);
+int gitnv_state_new(GitnvState **, char *current_dir);
 void gitnv_state_free(GitnvState *);
 
 void gitnv_state_get_cache_filepath(GitnvState *, char *buffer, int len);

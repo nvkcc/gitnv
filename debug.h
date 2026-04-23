@@ -1,5 +1,5 @@
-#ifndef _GITNU_DEBUG_H
-#define _GITNU_DEBUG_H 1
+#ifndef a2f7a3b1086d5d6b1cdec43762eee17380a99a43
+#define a2f7a3b1086d5d6b1cdec43762eee17380a99a43 1
 
 #include <stdio.h>
 #include <unistd.h>
