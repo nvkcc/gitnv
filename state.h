@@ -13,7 +13,7 @@ void gitnv_state_get_cache_filepath(GitnvState *, char *buffer, int len);
 
 // The prefix to be pre-pended to every "git status" entry to make it such
 // that each one is relative to `git_dir`. Note that "git status" shows
-// filepaths relative to the current working directory (`CURRENT_DIR`).
+// filepaths relative to the current working directory.
 void gitnv_state_get_prefix(GitnvState *, char *buffer, int len);
 
 /// Takes a `pathspec` from the output of "git status", which is relative to the

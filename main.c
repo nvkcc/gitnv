@@ -10,16 +10,11 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#define STARTS_WITH(haystack, prefix)                                          \
-    (strncmp(haystack, prefix, sizeof(prefix) - 1) == 0)
-
-static char CURRENT_DIR[GITNV_MAX_PATH_LEN];
-
-static char GIT_ALIASES[GITNV_MAX_ALIASES][2][GITNV_ALIAS_MAX_LEN];
-static int GIT_ALIASES_LEN[GITNV_MAX_ALIASES][2];
-static int NUM_GIT_ALIASES;
-
 int gather_aliases(git_config *config) {
+    char GIT_ALIASES[GITNV_MAX_ALIASES][2][GITNV_ALIAS_MAX_LEN];
+    int GIT_ALIASES_LEN[GITNV_MAX_ALIASES][2];
+    int NUM_GIT_ALIASES;
+
     int i = 0, key_len, val_len, err;
     git_config_iterator *it;
     git_config_iterator_glob_new(&it, config, "^alias.");
@@ -253,16 +248,14 @@ pid_t gitnv_non_status(int argc, char *argv[], GitnvState *z) {
     return pid;
 }
 
-int main_inner(int argc, char *argv[]) {
+int main_inner(int argc, char *argv[], char *current_dir) {
     int err;
-    log_info("START EXECUTION", 0);
-
+    log_trace("[git-nv] CURRENT_DIR = %s", current_dir);
     for (int i = 0; i < argc; ++i) {
-        log_info("arg[%d] = %s", i, argv[i]);
+        log_trace("arg[%d] = %s", i, argv[i]);
     }
-    log_info("CURRENT_DIR = %s", CURRENT_DIR);
     GitnvState *z;
-    err = gitnv_state_new(&z, CURRENT_DIR);
+    err = gitnv_state_new(&z, current_dir);
     if (err != 0) {
         SEND_STDERR_LN("Failed to initialize git-nv state.");
         return err;
@@ -284,14 +277,15 @@ int main_inner(int argc, char *argv[]) {
 
 int main(int argc, char *argv[]) {
     log_set_level(LOG_TRACE);
+    char current_dir[GITNV_MAX_PATH_LEN];
 
     argv[0] = "git";
-    if (!getcwd(CURRENT_DIR, 1024)) {
+    if (!getcwd(current_dir, GITNV_MAX_PATH_LEN)) {
         SEND_STDERR("Failed to get current working directory.");
         return 1;
     }
     git_libgit2_init();
-    int result = main_inner(argc, argv);
+    int result = main_inner(argc, argv, current_dir);
     git_libgit2_shutdown();
     return result;
 }
