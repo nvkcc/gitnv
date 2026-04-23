@@ -70,12 +70,16 @@ int gitnv_status(GitnvState *z) {
 
     FILE *status_f = fdopen(fd[0], "rb");
     char status_buf[1024], *status_ptr;
-    for (int i = 1, l; i <= GITNV_MAX_CACHE_NUMBER;) {
+    for (int i = 1, l;;) {
         status_ptr = status_buf + (l = COUNT_DIGITS(i) + 1);
         if (fgets(status_ptr, 1024 - l, status_f) == NULL) {
             break;
         }
         n = strlen(status_ptr);
+        if (i > GITNV_MAX_CACHE_NUMBER) {
+            write(STDOUT_FILENO, status_ptr, n);
+            continue;
+        }
         seen_untracked |= STARTS_WITH(status_ptr, "Untracked files:");
         // We only enumerate those lines that start with a '\t' character. Yes,
         // amazingly this identifier for lines of interest works.
@@ -139,17 +143,25 @@ int gitnv_status(GitnvState *z) {
         i++;
     }
 
-    // write(STDOUT_FILENO, cache_buf, cache_ptr - cache_buf);
-
     char cache_filepath[GITNV_MAX_PATH_LEN];
     gitnv_state_get_cache_filepath(z, cache_filepath, GITNV_MAX_PATH_LEN);
 
-    /// Write to the cache file.
-    /// TODO: handle the case when `fopen()` fails.
-    FILE *cache_f = fopen(cache_filepath, "w");
-    fwrite(cache_buf, cache_ptr - cache_buf, 1, cache_f);
-    fclose(cache_f);
+    /// Nothing to write to cache
+    if (cache_ptr == cache_buf) {
+        log_info("Nothing to update cache.");
+        return 0;
+    }
 
+    /// Write to the cache file.
+    FILE *cache_f = fopen(cache_filepath, "w");
+    if (cache_f == NULL) {
+        write_stderr("Failed to open cache file.");
+        return 1;
+    }
+    if (fwrite(cache_buf, cache_ptr - cache_buf, 1, cache_f) < 1) {
+        write_stderr("Failed to write to cache file.");
+    }
+    fclose(cache_f);
     return 0;
 }
 
@@ -282,7 +294,7 @@ int main(int argc, char *argv[]) {
 
     argv[0] = "git";
     if (!getcwd(current_dir, GITNV_MAX_PATH_LEN)) {
-        SEND_STDERR("Failed to get current working directory.");
+        write_stderr("Failed to get current working directory.");
         return 1;
     }
     git_libgit2_init();

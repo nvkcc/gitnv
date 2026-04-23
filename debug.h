@@ -9,4 +9,6 @@
 #define SEND_STDOUT(msg) write(STDOUT_FILENO, msg, sizeof(msg));
 #define SEND_STDOUT_LN(msg) write(STDOUT_FILENO, msg "\n", sizeof(msg) + 1);
 
+#define write_stderr(msg) write(STDOUT_FILENO, msg "\n", sizeof(msg) + 1);
+
 #endif
