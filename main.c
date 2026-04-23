@@ -235,13 +235,19 @@ int gitnv_non_status(int argc, char *argv[], GitnvState *z) {
     }
 
     uint64_t cache_mask = 0;
-    int total_args = 0;
+    int total_args = 0, i, j;
     total_args += 1; // for the binary path.
     total_args += 1; // for the NULL at the end.
 
-    for (int i = 1; i < argc; ++i) {
+    for (i = 1; i < argc; ++i) {
         total_args += parse_args(argv[i], &cache_mask);
     }
+    char *args[total_args];
+    args[0] = "git";
+    for (i = 1, j = 0; i < argc; ++i) {
+    }
+
+    execvp("git", args);
 
     gitnv_cache_free(cache);
 

@@ -9,7 +9,18 @@ extern "C" {
 // string including the NUL byte. Returns the new length of the string (also
 // including the NUL byte).
 int uncolor(char *b, int len);
+
 int parse_args(const char *arg, uint64_t *cache_mask);
+
+enum arg_type {
+    // Treat the arg like a regular pathspec.
+    NO_OP,
+    SINGLE,
+    RANGE
+};
+
+enum arg_type parse_arg2(char *arg, unsigned short *left,
+                         unsigned short *right);
 
 #ifdef __cplusplus
 }

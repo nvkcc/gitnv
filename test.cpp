@@ -36,6 +36,31 @@ TEST(Util, ParseArgs) {
 #undef TEST_PARSE
 }
 
+TEST(Util, ParseArgs2) {
+    unsigned short left, right;
+#define TEST_PARSE(ARG, OUTCOME)                                               \
+    {                                                                          \
+        char arg[] = ARG;                                                      \
+        ASSERT_EQ(parse_arg2(arg, &left, &right), OUTCOME);                    \
+    }
+    TEST_PARSE("3", SINGLE);
+    ASSERT_EQ(left, 3);
+    TEST_PARSE("8", SINGLE);
+    ASSERT_EQ(left, 8);
+    TEST_PARSE("0", NO_OP);
+    TEST_PARSE("2..7", RANGE);
+    ASSERT_EQ(left, 2);
+    ASSERT_EQ(right, 7);
+    TEST_PARSE("3..11", RANGE);
+    ASSERT_EQ(left, 3);
+    ASSERT_EQ(right, 11);
+    TEST_PARSE("6..6", RANGE);
+    ASSERT_EQ(left, 6);
+    ASSERT_EQ(right, 6);
+    TEST_PARSE("6..5", NO_OP);
+#undef TEST_PARSE
+}
+
 int main(int argc, char **argv) {
     // Override the default result printer.
     testing::TestEventListeners &listeners =

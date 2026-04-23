@@ -60,3 +60,31 @@ int parse_args(const char *arg, uint64_t *cache_mask) {
     }
     return right - left + 1;
 }
+
+enum arg_type parse_arg2(char *arg, unsigned short *left,
+                         unsigned short *right) {
+    /// Length of `arg` without the NUL byte.
+    int n = strlen(arg);
+    char *dots;
+    // Try to search for the ".." substring in the arg.
+    if ((dots = memmem(arg, n, "..", 2)) == NULL) {
+        // Either a regular pathspec, or a single number.
+        n = atoi(arg);
+        if (GITNV_IS_VALID_USER_INPUT_NUMBER(n)) {
+            *left = n;
+            return SINGLE;
+        }
+        return NO_OP;
+    }
+    // Convert both the substrings on the left and right of the ".." to
+    // integers. For that we need a NUL byte to be strategically placed.
+    *dots = '\0';
+    *left = atoi(arg);
+    *right = atoi(dots + 2);
+    *dots = '.';
+    if (*left == 0 || !GITNV_IS_VALID_USER_INPUT_NUMBER(*right) ||
+        *right < *left) {
+        return NO_OP;
+    }
+    return RANGE;
+}
