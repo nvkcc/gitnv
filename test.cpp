@@ -18,30 +18,12 @@ TEST(Util, Uncolor2) {
     EXPECT_EQ(y, sizeof("\tmodified:\tbuild.py\n"));
 }
 
-TEST(Util, ParseArgs) {
-#define TEST_PARSE(ARG, NUM_ARGS, MASK)                                        \
-    {                                                                          \
-        char arg[] = ARG;                                                      \
-        uint64_t __mask = 0;                                                   \
-        ASSERT_EQ(parse_args(arg, &__mask), NUM_ARGS);                         \
-        ASSERT_EQ(__mask, MASK);                                               \
-    }
-    TEST_PARSE("3", 1, 0b100);
-    TEST_PARSE("8", 1, 0b10000000);
-    TEST_PARSE("0", 1, 0);
-    TEST_PARSE("2..7", 6, 0b1111110);
-    TEST_PARSE("3..11", 9, 0b11111111100);
-    TEST_PARSE("6..6", 1, 0b100000);
-    TEST_PARSE("6..5", 1, 0);
-#undef TEST_PARSE
-}
-
 TEST(Util, ParseArgs2) {
     parsed_arg arg;
 #define TEST_PARSE(ARG, TYPE)                                                  \
     {                                                                          \
         char input[] = ARG;                                                    \
-        parse_arg2(input, &arg);                                               \
+        parse_arg(input, &arg);                                               \
         ASSERT_EQ(arg.type, TYPE);                                             \
     }
     TEST_PARSE("3", SINGLE);

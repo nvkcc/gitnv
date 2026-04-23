@@ -29,7 +29,7 @@ typedef struct parsed_arg {
     union arg val;
 } parsed_arg;
 
-void parse_arg2(char *arg, parsed_arg *);
+void parse_arg(char *arg, parsed_arg *);
 
 #ifdef __cplusplus
 }

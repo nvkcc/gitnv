@@ -237,13 +237,14 @@ int gitnv_non_status(int argc, char *argv[], GitnvState *z) {
     int i, j, k;
     parsed_arg pa[argc];
 
+    // TODO: locate the git command ("add"/"commit"/"reset"/etc.) index first,
+    // and then parse the args behind that.
     for (i = 1; i < argc; ++i) {
-        parse_arg2(argv[i], &pa[i]);
+        parse_arg(argv[i], &pa[i]);
     }
 
     // Total args to send to execvp. 1 for "git", 1 for NULL.
     int num_args = 2;
-    char *ptr;
 
     for (i = 1; i < argc; ++i) {
         switch (pa[i].type) {
