@@ -15,7 +15,7 @@ VALGRIND_FLAGS += --log-file=$(VALGRIND_LOG)
 # VALGRIND_FLAGS += --xml-file=valgrind.xml
 
 # Either release or debug.
-RELEASE := false
+RELEASE := true
 
 ifeq ($(RELEASE), true)
 BUILD_TYPE := Release

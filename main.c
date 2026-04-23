@@ -213,7 +213,6 @@ pid_t gitnv_non_status(int argc, char *argv[], GitnvState *z) {
 
     char *args[num_args];
     args[0] = "git";
-    args[num_args - 1] = NULL;
 
     for (i = 1, j = 1; i < argc; ++i) {
         switch (pa[i].type) {
@@ -234,7 +233,7 @@ pid_t gitnv_non_status(int argc, char *argv[], GitnvState *z) {
             for (k = pa[i].val.range[0]; k <= pa[i].val.range[1]; ++k) {
                 args[j] = gitnv_cache_get_checked(cache, k - 1);
                 if (args[j] == NULL) {
-                    args[j] = argv[i];
+                    continue;
                 }
                 log_trace("RAssigned %d/%d : %s", j, num_args, args[j]);
                 j++;
@@ -242,6 +241,7 @@ pid_t gitnv_non_status(int argc, char *argv[], GitnvState *z) {
             break;
         }
     }
+    args[j] = NULL;
 
 #ifdef DEBUG_MODE
     for (int i = 0; i < num_args; ++i) {

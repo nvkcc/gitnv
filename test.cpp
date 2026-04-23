@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include "config.h"
+
 #include <nk_test_printer.h>
 
 #include "util.h"
@@ -26,6 +28,7 @@ TEST(Util, ParseArgs2) {
         parse_arg(input, &arg);                                                \
         ASSERT_EQ(arg.type, TYPE);                                             \
     }
+#define H(x) (x > GITNV_MAX_CACHE_NUMBER ? GITNV_MAX_CACHE_NUMBER : x)
     TEST_PARSE("3", SINGLE);
     ASSERT_EQ(arg.val.single, 3);
     TEST_PARSE("8", SINGLE);
@@ -33,15 +36,18 @@ TEST(Util, ParseArgs2) {
     TEST_PARSE("0", NO_OP);
     TEST_PARSE("2..7", RANGE);
     ASSERT_EQ(arg.val.range[0], 2);
-    ASSERT_EQ(arg.val.range[1], 7);
+    ASSERT_EQ(arg.val.range[1], H(7));
     TEST_PARSE("3..11", RANGE);
     ASSERT_EQ(arg.val.range[0], 3);
-    ASSERT_EQ(arg.val.range[1], 11);
+    ASSERT_EQ(arg.val.range[1], H(11));
     TEST_PARSE("6..6", RANGE);
     ASSERT_EQ(arg.val.range[0], 6);
-    ASSERT_EQ(arg.val.range[1], 6);
+    ASSERT_EQ(arg.val.range[1], H(6));
     TEST_PARSE("6..5", NO_OP);
     TEST_PARSE("2beaaed", NO_OP);
+    TEST_PARSE("15..25", RANGE);
+    ASSERT_EQ(arg.val.range[0], 15);
+    ASSERT_EQ(arg.val.range[1], H(25));
 #undef TEST_PARSE
 }
 
