@@ -6,6 +6,12 @@
 
 #include <nk_log.h>
 
+typedef struct GitnvState {
+    git_buf git_dir;
+    git_repository *repo;
+    char *current_dir;
+} GitnvState;
+
 int gitnv_state_new(GitnvState **out, char *current_dir) {
     GitnvState *z = malloc(sizeof(GitnvState));
     z->current_dir = current_dir;
@@ -38,6 +44,10 @@ void gitnv_state_free(GitnvState *state) {
     free(state);
 }
 
-void gitnv_state_get_cache_filepath(GitnvState *z, char *buf, int len) {
-    cwk_path_join(z->git_dir.ptr, GITNV_CACHE_FILENAME, buf, len);
+void gitnv_state_get_cache_filepath(GitnvState *z, char *buffer, int len) {
+    cwk_path_join(z->git_dir.ptr, GITNV_CACHE_FILENAME, buffer, len);
+}
+
+void gitnv_state_get_prefix(GitnvState *z, char *buffer, int len) {
+    cwk_path_get_relative(z->git_dir.ptr, z->current_dir, buffer, len);
 }

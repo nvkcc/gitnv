@@ -115,12 +115,8 @@ int gitnv_status(GitnvState *z) {
         close(fd[1]);
     }
 
-    // The prefix to be pre-pended to every "git status" entry to make it such
-    // that each one is relative to `git_dir`. Note that "git status" shows
-    // filepaths relative to the current working directory (`CURRENT_DIR`).
     char prefix[GITNV_MAX_PATH_LEN];
-    cwk_path_get_relative(z->git_dir.ptr, CURRENT_DIR, prefix,
-                          GITNV_MAX_PATH_LEN);
+    gitnv_state_get_prefix(z, prefix, GITNV_MAX_PATH_LEN);
 
     // 24kB cache buffer. To write to the file in one-shot later.
     char cache_buf[24 * 1024];
