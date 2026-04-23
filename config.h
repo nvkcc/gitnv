@@ -4,8 +4,11 @@
 #define GITNV_MAX_PATH_LEN 1024
 #define GITNV_CACHE_FILENAME "gitnv.txt"
 
-/// Ensure that COUNT_DIGITS is still valid after changing this.
+/// Feel free to change this to any value between 1 and 64 inclusive.
 #define GITNV_MAX_CACHE_NUMBER 20
+
+#define GITNV_IS_VALID_USER_INPUT_NUMBER(N)                                    \
+    (N != 0 && N <= GITNV_MAX_CACHE_NUMBER)
 
 /// Operates on the assumption that X <= GITNV_MAX_CACHE_NUMBER.
 #define COUNT_DIGITS(X) (X <= 0 ? -1 : (X < 10 ? 1 : 2))
