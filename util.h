@@ -19,8 +19,17 @@ enum arg_type {
     RANGE
 };
 
-enum arg_type parse_arg2(char *arg, unsigned short *left,
-                         unsigned short *right);
+union arg {
+    int single;
+    int range[2];
+};
+
+typedef struct parsed_arg {
+    enum arg_type type;
+    union arg val;
+} parsed_arg;
+
+void parse_arg2(char *arg, parsed_arg *);
 
 #ifdef __cplusplus
 }

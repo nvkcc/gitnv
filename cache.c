@@ -37,7 +37,7 @@ void gitnv_cache_load(GitnvCache *z, FILE *cache_f) {
         if (fgets(z->entries[i], GITNV_MAX_PATH_LEN, cache_f) == NULL) {
             break;
         }
-        printf("[%d] %s", i, z->entries[i]);
+        printf("[+%d] %s", i + 1, z->entries[i]);
         // Successful insertion.
         z->len = i + 1;
         if ((ptr = memchr(z->entries[i], '\n', GITNV_MAX_PATH_LEN))) {

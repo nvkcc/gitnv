@@ -37,26 +37,27 @@ TEST(Util, ParseArgs) {
 }
 
 TEST(Util, ParseArgs2) {
-    unsigned short left, right;
-#define TEST_PARSE(ARG, OUTCOME)                                               \
+    parsed_arg arg;
+#define TEST_PARSE(ARG, TYPE)                                                  \
     {                                                                          \
-        char arg[] = ARG;                                                      \
-        ASSERT_EQ(parse_arg2(arg, &left, &right), OUTCOME);                    \
+        char input[] = ARG;                                                    \
+        parse_arg2(input, &arg);                                               \
+        ASSERT_EQ(arg.type, TYPE);                                             \
     }
     TEST_PARSE("3", SINGLE);
-    ASSERT_EQ(left, 3);
+    ASSERT_EQ(arg.val.single, 3);
     TEST_PARSE("8", SINGLE);
-    ASSERT_EQ(left, 8);
+    ASSERT_EQ(arg.val.single, 8);
     TEST_PARSE("0", NO_OP);
     TEST_PARSE("2..7", RANGE);
-    ASSERT_EQ(left, 2);
-    ASSERT_EQ(right, 7);
+    ASSERT_EQ(arg.val.range[0], 2);
+    ASSERT_EQ(arg.val.range[1], 7);
     TEST_PARSE("3..11", RANGE);
-    ASSERT_EQ(left, 3);
-    ASSERT_EQ(right, 11);
+    ASSERT_EQ(arg.val.range[0], 3);
+    ASSERT_EQ(arg.val.range[1], 11);
     TEST_PARSE("6..6", RANGE);
-    ASSERT_EQ(left, 6);
-    ASSERT_EQ(right, 6);
+    ASSERT_EQ(arg.val.range[0], 6);
+    ASSERT_EQ(arg.val.range[1], 6);
     TEST_PARSE("6..5", NO_OP);
 #undef TEST_PARSE
 }

@@ -234,22 +234,66 @@ int gitnv_non_status(int argc, char *argv[], GitnvState *z) {
         // }
     }
 
-    uint64_t cache_mask = 0;
-    int total_args = 0, i, j;
-    total_args += 1; // for the binary path.
-    total_args += 1; // for the NULL at the end.
+    int i, j, k;
+    parsed_arg pa[argc];
 
     for (i = 1; i < argc; ++i) {
-        total_args += parse_args(argv[i], &cache_mask);
+        parse_arg2(argv[i], &pa[i]);
     }
-    char *args[total_args];
+
+    // Total args to send to execvp. 1 for "git", 1 for NULL.
+    int num_args = 2;
+    char *ptr;
+
+    for (i = 1; i < argc; ++i) {
+        switch (pa[i].type) {
+        case NO_OP:
+        case SINGLE:
+            num_args++;
+            break;
+        case RANGE:
+            num_args += pa[i].val.range[1] - pa[i].val.range[0] + 1;
+            break;
+        }
+    }
+
+    char *args[num_args];
     args[0] = "git";
-    for (i = 1, j = 0; i < argc; ++i) {
+    args[num_args - 1] = NULL;
+
+    for (i = 1, j = 1; i < argc; ++i) {
+        switch (pa[i].type) {
+        case NO_OP:
+            log_trace("Assigned %d/%d", j, num_args);
+            args[j++] = argv[i];
+            break;
+        case SINGLE:
+            args[j] = gitnv_cache_get_checked(cache, pa[i].val.single - 1);
+            log_trace("Assigned %d/%d", j, num_args);
+            if (args[j] == NULL) {
+                args[j] = argv[i];
+            }
+            j++;
+            break;
+        case RANGE:
+            for (k = pa[i].val.range[0]; k <= pa[i].val.range[1]; ++k) {
+                args[j] = gitnv_cache_get_checked(cache, k - 1);
+                log_trace("Assigned %d/%d", j, num_args);
+                if (args[j] == NULL) {
+                    args[j] = argv[i];
+                }
+                j++;
+            }
+            break;
+        }
     }
 
-    execvp("git", args);
-
-    gitnv_cache_free(cache);
+#ifdef DEBUG_MODE
+    for (int i = 0; i < num_args; ++i) {
+        log_trace("[%d] = %s", i, args[i]);
+    }
+    log_info("Git non-status function exited!");
+#endif
 
     return 0;
 }
