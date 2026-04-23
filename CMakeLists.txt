@@ -35,17 +35,8 @@ FetchContent_Declare(
   cwalk
   URL https://github.com/likle/cwalk/archive/f45a23a13abf39d94b347d7c83810eca26a5a8d0.zip # v1.2.9
 )
-FetchContent_Declare(
-  nk_test
-  GIT_REPOSITORY https://github.com/nvkcc/nk_test
-  GIT_TAG        9b5e86dee066dfce8db73f007f68946adadbe74b
-  DOWNLOAD_EXTRACT_TIMESTAMP false
-)
 
-# (Google Test) For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-
-FetchContent_MakeAvailable(libgit2 cwalk nk_test)
+FetchContent_MakeAvailable(libgit2 cwalk)
 # ==============================================================================
 
 set(GITNV_SOURCES
@@ -57,17 +48,29 @@ set(GITNV_SOURCES
     "${CMAKE_SOURCE_DIR}/log.c"
 )
 
-enable_testing()
 add_executable(git-nv "${CMAKE_SOURCE_DIR}/main.c" ${GITNV_SOURCES})
-add_executable(git-nv-test "${CMAKE_SOURCE_DIR}/test.cpp" ${GITNV_SOURCES})
-include(GoogleTest)
 
-target_compile_definitions(git-nv PUBLIC DEBUG_MODE)
+# target_compile_definitions(git-nv PUBLIC DEBUG_MODE)
 
-target_include_directories(git-nv      PRIVATE "${libgit2_SOURCE_DIR}/include")
-target_include_directories(git-nv-test PRIVATE "${libgit2_SOURCE_DIR}/include")
+target_include_directories(git-nv PRIVATE "${libgit2_SOURCE_DIR}/include")
 target_link_libraries(git-nv      PRIVATE libgit2package cwalk)
-target_link_libraries(git-nv-test PRIVATE libgit2package cwalk GTest::gtest_main GTest::gmock_main nk_test)
+
+if(BUILD_TESTS)
+  FetchContent_Declare(
+    nk_test
+    GIT_REPOSITORY https://github.com/nvkcc/nk_test
+    GIT_TAG        9b5e86dee066dfce8db73f007f68946adadbe74b
+    DOWNLOAD_EXTRACT_TIMESTAMP false
+  )
+  # (Google Test) For Windows: Prevent overriding the parent project's compiler/linker settings
+  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+  FetchContent_MakeAvailable(nk_test)
+  enable_testing()
+  add_executable(git-nv-test "${CMAKE_SOURCE_DIR}/test.cpp" ${GITNV_SOURCES})
+  include(GoogleTest)
+  target_include_directories(git-nv-test PRIVATE "${libgit2_SOURCE_DIR}/include")
+  target_link_libraries(git-nv-test      PRIVATE libgit2package cwalk GTest::gtest_main GTest::gmock_main nk_test)
+endif()
 
 # Install.
 install(TARGETS git-nv)
