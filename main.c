@@ -206,24 +206,25 @@ pid_t gitnv_non_status(int argc, char *argv[], GitnvState *z) {
     for (i = 1, j = 1; i < argc; ++i) {
         switch (pa[i].type) {
         case NO_OP:
-            log_trace("Assigned %d/%d", j, num_args);
-            args[j++] = argv[i];
+            args[j] = argv[i];
+            log_trace("NAssigned %d/%d : %s", j, num_args, args[j]);
+            j++;
             break;
         case SINGLE:
             args[j] = gitnv_cache_get_checked(cache, pa[i].val.single - 1);
-            log_trace("Assigned %d/%d", j, num_args);
             if (args[j] == NULL) {
                 args[j] = argv[i];
             }
+            log_trace("SAssigned %d/%d : %s", j, num_args, args[j]);
             j++;
             break;
         case RANGE:
             for (k = pa[i].val.range[0]; k <= pa[i].val.range[1]; ++k) {
                 args[j] = gitnv_cache_get_checked(cache, k - 1);
-                log_trace("Assigned %d/%d", j, num_args);
                 if (args[j] == NULL) {
                     args[j] = argv[i];
                 }
+                log_trace("RAssigned %d/%d : %s", j, num_args, args[j]);
                 j++;
             }
             break;

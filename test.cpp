@@ -23,7 +23,7 @@ TEST(Util, ParseArgs2) {
 #define TEST_PARSE(ARG, TYPE)                                                  \
     {                                                                          \
         char input[] = ARG;                                                    \
-        parse_arg(input, &arg);                                               \
+        parse_arg(input, &arg);                                                \
         ASSERT_EQ(arg.type, TYPE);                                             \
     }
     TEST_PARSE("3", SINGLE);
@@ -41,6 +41,7 @@ TEST(Util, ParseArgs2) {
     ASSERT_EQ(arg.val.range[0], 6);
     ASSERT_EQ(arg.val.range[1], 6);
     TEST_PARSE("6..5", NO_OP);
+    TEST_PARSE("2beaaed", NO_OP);
 #undef TEST_PARSE
 }
 

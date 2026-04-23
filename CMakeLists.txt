@@ -22,6 +22,8 @@ set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(BUILD_FUZZERS OFF CACHE BOOL "" FORCE)
 
+set(BUILD_GTEST OFF CACHE BOOL "" FORCE)
+
 # ==============================================================================
 # External Dependencies.
 
@@ -54,7 +56,7 @@ add_executable(git-nv "${CMAKE_SOURCE_DIR}/main.c" ${GITNV_SOURCES})
 target_include_directories(git-nv PRIVATE "${libgit2_SOURCE_DIR}/include")
 target_link_libraries(git-nv      PRIVATE libgit2package cwalk)
 
-if(BUILD_TESTS)
+if(BUILD_GTEST)
   FetchContent_Declare(
     nk_test
     GIT_REPOSITORY https://github.com/nvkcc/nk_test
@@ -66,6 +68,7 @@ if(BUILD_TESTS)
   FetchContent_MakeAvailable(nk_test)
   enable_testing()
   add_executable(git-nv-test "${CMAKE_SOURCE_DIR}/test.cpp" ${GITNV_SOURCES})
+  target_compile_definitions(git-nv-test PUBLIC DEBUG_MODE)
   include(GoogleTest)
   target_include_directories(git-nv-test PRIVATE "${libgit2_SOURCE_DIR}/include")
   target_link_libraries(git-nv-test      PRIVATE libgit2package cwalk GTest::gtest_main GTest::gmock_main nk_test)
