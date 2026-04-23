@@ -1,5 +1,17 @@
 #include <stdint.h>
 
+#define PIPE_OR_RETURN(fd)                                                     \
+    if (pipe(fd) == -1) {                                                      \
+        perror("pipe failed");                                                 \
+        return 1;                                                              \
+    }
+
+#define FORK_OR_RETURN(pid)                                                    \
+    if ((pid = fork()) == -1) {                                                \
+        perror("fork failed");                                                 \
+        return 1;                                                              \
+    }
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -14,25 +14,8 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-// Ban list.
-// 1. printf: in production we want zero allocations.
-#define BANNED(func) sorry__##func##__is_a_banned_function
-// #undef printf
-// #define printf(...) BANNED(strcpy)
-
 #define STARTS_WITH(haystack, prefix)                                          \
     (strncmp(haystack, prefix, sizeof(prefix) - 1) == 0)
-
-#define PIPE_OR_RETURN(fd)                                                     \
-    if (pipe(fd) == -1) {                                                      \
-        perror("pipe failed");                                                 \
-        return 1;                                                              \
-    }
-#define FORK_OR_RETURN(pid)                                                    \
-    if ((pid = fork()) == -1) {                                                \
-        perror("fork failed");                                                 \
-        return 1;                                                              \
-    }
 
 static char CURRENT_DIR[GITNV_MAX_PATH_LEN];
 
@@ -65,37 +48,6 @@ int gather_aliases(git_config *config) {
     }
     NUM_GIT_ALIASES = i;
     git_config_iterator_free(it);
-    return 0;
-}
-
-void create_cache_file(git_buf *git_dir) {
-    char cache_filepath[GITNV_MAX_PATH_LEN];
-    cwk_path_join(git_dir->ptr, GITNV_CACHE_FILENAME, cache_filepath,
-                  GITNV_MAX_PATH_LEN);
-    FILE *f = fopen(cache_filepath, "w+");
-    fwrite("HEYYYYYYYYYYYYYYYYYYYYYYYY", 10, 1, f);
-    fclose(f);
-    log_info("%s", cache_filepath);
-
-    // The prefix to be pre-pended to every "git status" entry to make it such
-    // that each one is relative to `git_dir`. Note that "git status" shows
-    // filepaths relative to the current working directory (`CURRENT_DIR`).
-    char prefix[GITNV_MAX_PATH_LEN];
-
-    cwk_path_get_relative(git_dir->ptr, CURRENT_DIR, prefix,
-                          GITNV_MAX_PATH_LEN);
-    log_info("%s", prefix);
-    // cwk_path_get_relative(b, a, buf, GITNV_MAX_PATH_LEN);
-    // log_info("%s", buf);
-}
-
-int gitnv_status_update_cache(GitnvState *z, git_status_list *gsl) {
-    int n = git_status_list_entrycount(gsl), i = 0;
-    for (const git_status_entry *entry; i < n; ++i) {
-        entry = git_status_byindex(gsl, i);
-        log_info("%s", entry->index_to_workdir->new_file.path);
-        log_info("%s", entry->index_to_workdir->old_file.path);
-    }
     return 0;
 }
 
@@ -338,18 +290,6 @@ int main_inner(int argc, char *argv[]) {
 
 int main(int argc, char *argv[]) {
     log_set_level(LOG_TRACE);
-    // int n = 128;
-    // char buf[n];
-    // gitnv_buf_reader br = {.buf = buf};
-    // gitnv_buf_reader_new(&br, STDIN_FILENO, n);
-    // int i = 0;
-    // while (gitnv_buf_reader_next(&br) == 0) {
-    //     log_info("[%d] \x1b[33m|\x1b[m%s\x1b[33m|\x1b[m", ++i, buf);
-    // }
-    //
-    // log_trace("END");
-    //
-    // return 0;
 
     argv[0] = "git";
     if (!getcwd(CURRENT_DIR, 1024)) {
