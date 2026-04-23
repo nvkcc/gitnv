@@ -51,3 +51,11 @@ void gitnv_state_get_cache_filepath(GitnvState *z, char *buffer, int len) {
 void gitnv_state_get_prefix(GitnvState *z, char *buffer, int len) {
     cwk_path_get_relative(z->git_dir.ptr, z->current_dir, buffer, len);
 }
+
+int gitnv_state_resolve_pathspec(GitnvState *z, char *pathspec, char *buffer,
+                                 int len) {
+    /// Get the absolute path of the pathspec.
+    cwk_path_join(z->current_dir, pathspec, buffer, len);
+    /// Get the relative path of the pathspec with respect to the git-dir.
+    return cwk_path_get_relative(z->git_dir.ptr, buffer, buffer, len);
+}

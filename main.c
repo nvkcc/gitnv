@@ -190,11 +190,8 @@ int gitnv_status(GitnvState *z) {
                    "memory allocated.");
             return 1;
         }
-        /// Get the absolute path of the pathspec.
-        cwk_path_join(CURRENT_DIR, pathspec, cache_ptr, remaining_space);
-        /// Get the relative path of the pathspec with respect to the git-dir.
-        n = cwk_path_get_relative(z->git_dir.ptr, cache_ptr, cache_ptr,
-                                  remaining_space);
+        n = gitnv_state_resolve_pathspec(z, pathspec, cache_ptr,
+                                         remaining_space);
         cache_ptr[n++] = '\n';
         cache_ptr += n;
         i++;

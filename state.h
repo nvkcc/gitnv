@@ -16,4 +16,10 @@ void gitnv_state_get_cache_filepath(GitnvState *, char *buffer, int len);
 // filepaths relative to the current working directory (`CURRENT_DIR`).
 void gitnv_state_get_prefix(GitnvState *, char *buffer, int len);
 
+/// Takes a `pathspec` from the output of "git status", which is relative to the
+/// current directory, and converts it to a path that is relative to the git
+/// directory.
+int gitnv_state_resolve_pathspec(GitnvState *, char *pathspec, char *buffer,
+                                 int len);
+
 #endif
