@@ -52,17 +52,13 @@ TEST(Util, ParseArgs2) {
 }
 
 int main(int argc, char **argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+
     // Override the default result printer.
-    testing::TestEventListeners &listeners =
-        testing::UnitTest::GetInstance()->listeners();
+    ::testing::TestEventListeners &listeners =
+        ::testing::UnitTest::GetInstance()->listeners();
     delete listeners.Release(listeners.default_result_printer());
     listeners.Append(new NkTestPrinter);
 
-    testing::InitGoogleTest(&argc, argv);
-
-    int exit_code = RUN_ALL_TESTS();
-    if (exit_code != 0) {
-        return exit_code;
-    }
-    return 0;
+    return RUN_ALL_TESTS();
 }

@@ -76,16 +76,10 @@ if(BUILD_GITNV_TESTS)
   set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
   FetchContent_MakeAvailable(nk_test)
   enable_testing()
-  add_executable(git-nv-test "${CMAKE_SOURCE_DIR}/test.cpp" ${GITNV_SOURCES})
+  add_executable(git-nv-test "${CMAKE_CURRENT_SOURCE_DIR}/test.cpp" ${GITNV_SOURCES})
   target_compile_definitions(git-nv-test PUBLIC DEBUG_MODE)
-  include(GoogleTest)
-  target_include_directories(git-nv-test PRIVATE "${libgit2_SOURCE_DIR}/include")
-  target_link_libraries(git-nv-test PRIVATE
-    libgit2package
-    cwalk
-    # GTest::gtest_main GTest::gmock_main
-    nk_test
-  )
+  target_link_libraries(git-nv-test PRIVATE libgit2package cwalk nk_test)
+  add_test(NAME GitnuTests COMMAND git-nv-test)
 else()
   # Install, but only when there are no tests built.
   install(TARGETS git-nv)

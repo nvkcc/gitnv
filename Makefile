@@ -30,9 +30,10 @@ DEV_DIR := ~/repos/alatty/kittens/ask
 COMMAND_FILE := $(MAKEFILE_DIR)/cmake/Commands.mk
 
 current: setup-commands
+current: test
 
 $(COMMAND_FILE): cmake/setup_commands.py
-	@python3 cmake/setup_commands.py -- \
+	@python3 cmake/setup_commands.py \
 		build \
 		test \
 		> $(COMMAND_FILE)
@@ -62,6 +63,9 @@ build: build-record configure
 test: CMAKE_BUILD_TYPE := Debug
 test: BUILD_GITNV_TESTS := ON
 test: test-record configure
+	cmake --build $(BUILD_DIR) --parallel 4
+	# cd $(BUILD_DIR) && ctest # run CTest. That's one way of doing things.
+	$(BUILD_DIR)/git-nv-test
 
 # CMAKE_BUILD_TYPE=
 #
