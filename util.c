@@ -45,7 +45,7 @@ void parse_arg(char *arg, parsed_arg *out) {
         // Either a regular pathspec, or a single number.
         n = antoi(arg, n);
         log_trace("single n = %d", n);
-        if (GITNV_IS_VALID_USER_INPUT_NUMBER(n)) {
+        if (n > 0) {
             out->type = SINGLE;
             out->val.single = n;
         } else {

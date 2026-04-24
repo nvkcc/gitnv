@@ -9,10 +9,10 @@
 /// Feel free to change this to any value between 1 and 64 inclusive.
 #define GITNV_MAX_CACHE_NUMBER 20
 
-#define GITNV_IS_VALID_USER_INPUT_NUMBER(N)                                    \
-    (N != 0 && N <= GITNV_MAX_CACHE_NUMBER)
-
 /// Operates on the assumption that X <= GITNV_MAX_CACHE_NUMBER.
 #define COUNT_DIGITS(X) (X <= 0 ? -1 : (X < 10 ? 1 : 2))
+
+#define GITNV_IS_VALID_USER_INPUT_NUMBER(N)                                    \
+    (N != 0 && N <= GITNV_MAX_CACHE_NUMBER)
 
 #endif
