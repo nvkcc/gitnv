@@ -6,21 +6,21 @@
 
 #include "util.h"
 
-TEST(Util, Uncolor1) {
+TEST(Uncolor, Case1) {
     char x[] = "hello\x1b[33mthere\x1b[m";
     int y = uncolor(x, sizeof(x));
     EXPECT_STREQ(x, "hellothere");
     EXPECT_EQ(y, sizeof("hellothere"));
 }
 
-TEST(Util, Uncolor2) {
+TEST(Uncolor, Case2) {
     char x[] = "\t\x1b[31mmodified:\tbuild.py\x1b[m\n";
     int y = uncolor(x, sizeof(x));
     EXPECT_STREQ(x, "\tmodified:\tbuild.py\n");
     EXPECT_EQ(y, sizeof("\tmodified:\tbuild.py\n"));
 }
 
-TEST(Util, ParseArgs2) {
+TEST(ParseArgs, Single1) {
     parsed_arg arg;
 #define TEST_PARSE(ARG, TYPE)                                                  \
     {                                                                          \

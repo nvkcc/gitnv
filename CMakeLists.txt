@@ -52,13 +52,17 @@ FetchContent_Declare(
 # ==============================================================================
 
 set(GITNV_SOURCES
-    "${CMAKE_SOURCE_DIR}/state.c"
-    "${CMAKE_SOURCE_DIR}/util.c"
-    "${CMAKE_SOURCE_DIR}/cache.c"
-    "${CMAKE_SOURCE_DIR}/log.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/state.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/util.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/cache.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/log.c"
 )
 
-add_executable(git-nv "${CMAKE_SOURCE_DIR}/main.c" ${GITNV_SOURCES})
+add_library(git-nv-lib ${GITNV_SOURCES})
+target_include_directories(git-nv-lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+add_executable(git-nv ${CMAKE_CURRENT_SOURCE_DIR}/main.c)
+target_link_libraries(git-nv PRIVATE git-nv-lib)
 
 # https://cmake.org/cmake/help/latest/manual/cmake-generator-expressions.7.html#genex:condition
 # https://cmake.org/cmake/help/latest/manual/cmake-generator-expressions.7.html#genex:CONFIG
@@ -76,9 +80,9 @@ if(BUILD_GITNV_TESTS)
   set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
   FetchContent_MakeAvailable(nk_test)
   enable_testing()
-  add_executable(git-nv-test "${CMAKE_CURRENT_SOURCE_DIR}/test.cpp" ${GITNV_SOURCES})
+  add_executable(git-nv-test ${CMAKE_CURRENT_SOURCE_DIR}/test.cpp)
   target_compile_definitions(git-nv-test PUBLIC DEBUG_MODE)
-  target_link_libraries(git-nv-test PRIVATE libgit2package cwalk nk_test)
+  target_link_libraries(git-nv-test PRIVATE libgit2package cwalk nk_test git-nv-lib)
   add_test(NAME GitnuTests COMMAND git-nv-test)
 else()
   # Install, but only when there are no tests built.

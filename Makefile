@@ -60,6 +60,9 @@ reconfigure: remove-cmake-binary-dir configure
 build: build-record configure
 	cmake --build $(BUILD_DIR) --parallel 4
 
+install: build
+	cmake --install $(BUILD_DIR)
+
 test: CMAKE_BUILD_TYPE := Debug
 test: BUILD_GITNV_TESTS := ON
 test: test-record configure
