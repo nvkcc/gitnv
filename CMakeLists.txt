@@ -80,7 +80,10 @@ if(BUILD_GITNV_TESTS)
   set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
   FetchContent_MakeAvailable(nk_test)
   enable_testing()
-  add_executable(git-nv-test ${CMAKE_CURRENT_SOURCE_DIR}/test.cpp)
+  add_executable(git-nv-test
+    ${CMAKE_CURRENT_SOURCE_DIR}/test/main.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/test/parse-args.cpp
+  )
   target_compile_definitions(git-nv-test PUBLIC DEBUG_MODE)
   target_link_libraries(git-nv-test PRIVATE libgit2package cwalk nk_test git-nv-lib)
   add_test(NAME GitnuTests COMMAND git-nv-test)

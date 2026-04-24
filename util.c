@@ -65,6 +65,9 @@ void parse_arg(char *arg, parsed_arg *out) {
     }
     if (L == 0 || R < L) {
         out->type = NO_OP;
+    } else if (R == L) {
+        out->type = SINGLE;
+        out->val.single = R;
     } else {
         out->type = RANGE;
     }
