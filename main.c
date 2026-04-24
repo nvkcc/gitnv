@@ -72,7 +72,7 @@ int gitnv_status(GitnvState *z) {
     char status_buf[1024], *status_ptr;
     for (int i = 1, l;;) {
         status_ptr = status_buf + (l = COUNT_DIGITS(i) + 1);
-        if (fgets(status_ptr, 1024 - l, status_f) == NULL) {
+        if (fgets(status_ptr, sizeof(status_buf) - l, status_f) == NULL) {
             break;
         }
         n = strlen(status_ptr);
