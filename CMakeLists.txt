@@ -16,13 +16,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # libgit2 options
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
-set(BUILD_CLAR OFF CACHE BOOL "" FORCE)
-set(BUILD_CLI OFF CACHE BOOL "" FORCE)
-set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(BUILD_CLAR     OFF CACHE BOOL "" FORCE)
+set(BUILD_CLI      OFF CACHE BOOL "" FORCE)
+set(BUILD_TESTS    OFF CACHE BOOL "" FORCE)
 set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(BUILD_FUZZERS OFF CACHE BOOL "" FORCE)
+set(BUILD_FUZZERS  OFF CACHE BOOL "" FORCE)
+set(USE_NSEC       OFF CACHE BOOL "" FORCE)
 
-set(BUILD_GTEST OFF CACHE BOOL "" FORCE)
+set(BUILD_GTEST    OFF CACHE BOOL "" FORCE)
 
 # ==============================================================================
 # External Dependencies.
@@ -37,8 +38,14 @@ FetchContent_Declare(
   cwalk
   URL https://github.com/likle/cwalk/archive/f45a23a13abf39d94b347d7c83810eca26a5a8d0.zip # v1.2.9
 )
+FetchContent_Declare(
+  rxi-log
+  GIT_REPOSITORY https://github.com/nvkcc/log.c
+  GIT_TAG        a91f7ec797fc1f8c0cb4f29169d8284377fa430f
+  DOWNLOAD_EXTRACT_TIMESTAMP false
+)
 
-FetchContent_MakeAvailable(libgit2 cwalk)
+FetchContent_MakeAvailable(libgit2 cwalk rxi-log)
 # ==============================================================================
 
 set(GITNV_SOURCES
@@ -50,10 +57,14 @@ set(GITNV_SOURCES
 
 add_executable(git-nv "${CMAKE_SOURCE_DIR}/main.c" ${GITNV_SOURCES})
 
-# target_compile_definitions(git-nv PUBLIC DEBUG_MODE)
+target_compile_definitions(git-nv PUBLIC DEBUG_MODE)
 
 target_include_directories(git-nv PRIVATE "${libgit2_SOURCE_DIR}/include")
-target_link_libraries(git-nv      PRIVATE libgit2package cwalk)
+target_link_libraries(git-nv PRIVATE
+        libgit2package
+        cwalk
+  DEBUG rxi-log
+)
 
 if(BUILD_GTEST)
   FetchContent_Declare(
@@ -74,4 +85,6 @@ if(BUILD_GTEST)
 endif()
 
 # Install.
-install(TARGETS git-nv)
+if (NOT BUILD_GTEST)
+  install(TARGETS git-nv)
+endif()
