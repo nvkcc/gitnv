@@ -250,15 +250,9 @@ pid_t gitnv_non_status(int argc, char *argv[], GitnvState *z) {
     log_info("Git non-status function exited!");
 #endif
 
-    pid_t pid;
-    if ((pid = fork()) == 0) {
-        // TODO: handle the failure case.
-        execvp("git", args);
-
-        return pid;
-    }
-
-    return pid;
+    // TODO: handle the failure case.
+    execvp("git", args);
+    return 1;
 }
 
 int main_inner(int argc, char *argv[], char *current_dir) {
@@ -270,8 +264,10 @@ int main_inner(int argc, char *argv[], char *current_dir) {
     GitnvState *z;
     err = gitnv_state_new(&z, current_dir);
     if (err != 0) {
-        SEND_STDERR_LN("Failed to initialize git-nv state.");
-        return err;
+        argv[0] = "git";
+        // TODO: handle when this fails.
+        execvp("git", argv);
+        return 32768;
     }
 
     // We only support enumerating the values of the vanilla `git nv status`
@@ -279,9 +275,13 @@ int main_inner(int argc, char *argv[], char *current_dir) {
     if (argc == 2 && strncmp(argv[1], "status", 6) == 0) {
         err = gitnv_status(z);
     } else {
-        pid_t pid = gitnv_non_status(argc, argv, z);
-        if (pid != 0) {
-            waitpid(pid, NULL, 0);
+        pid_t pid;
+        if ((pid = fork()) == 0) {
+            gitnv_non_status(argc, argv, z);
+        } else {
+            waitpid(pid, &err, 0);
+            err >>= 8;
+            log_trace("gitnv-non-status pid: %d, exit_code = %d", pid, err);
         }
     }
     gitnv_state_free(z);
@@ -290,6 +290,9 @@ int main_inner(int argc, char *argv[], char *current_dir) {
 
 int main(int argc, char *argv[]) {
     log_set_level(LOG_TRACE);
+    log_set_quiet(1);
+    FILE *log_file = fopen("/home/khang/.local/state/git-nv.log", "w");
+    log_add_fp(log_file, LOG_TRACE);
     char current_dir[GITNV_MAX_PATH_LEN];
 
     argv[0] = "git";
@@ -297,8 +300,13 @@ int main(int argc, char *argv[]) {
         write_stderr("Failed to get current working directory.");
         return 1;
     }
+    log_trace("Inititalizing libgit2...");
     git_libgit2_init();
+    log_trace("Inititalized libgit2.");
     int result = main_inner(argc, argv, current_dir);
+    log_trace("Shutting down libgit2...");
     git_libgit2_shutdown();
+    log_trace("libgit2 has been shut down.");
+    log_trace("Exit code: %d", result);
     return result;
 }
