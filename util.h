@@ -25,8 +25,6 @@ extern "C" {
 // including the NUL byte).
 int uncolor(char *b, int len);
 
-int parse_args(const char *arg, uint64_t *cache_mask);
-
 enum arg_type {
     // Treat the arg like a regular pathspec.
     NO_OP,
