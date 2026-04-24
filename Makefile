@@ -13,7 +13,7 @@ VALGRIND_FLAGS :=
 VALGRIND_FLAGS += --trace-children=yes
 VALGRIND_FLAGS += --show-error-list=yes
 VALGRIND_FLAGS += --leak-check=full
-# VALGRIND_FLAGS += --show-leak-kinds=all
+VALGRIND_FLAGS += --show-leak-kinds=all
 VALGRIND_FLAGS += --log-file=$(VALGRIND_LOG)
 # VALGRIND_FLAGS += --xml=yes
 # VALGRIND_FLAGS += --xml-file=valgrind.xml
@@ -70,24 +70,9 @@ test: test-record configure
 	# cd $(BUILD_DIR) && ctest # run CTest. That's one way of doing things.
 	$(BUILD_DIR)/git-nv-test
 
-# CMAKE_BUILD_TYPE=
-#
-# dev_status: install
-# 	git -C $(DEV_DIR) nv status
-#
-# dev_add: install
-# 	git -C $(DEV_DIR) nv add thisfileshouldnotexist 3 1 2..7
-#
-# install: build
-# 	cmake --install $(BUILD_DIR)
-#
-# v: install
-# 	-@rm -f $(MAKEFILE_DIR)/valgrind-log*.txt
-# 	-cd $(DEV_DIR) && valgrind $(VALGRIND_FLAGS) -- git-nv status
-#
-# test: build
-# 	$(BUILD_DIR)/git-nv-test
-#
-# fmt:
-# 	git ls-files '*.c' '*.h' | xargs clang-format -i
-#
+v: install
+	-@rm -f $(MAKEFILE_DIR)/valgrind-log*.txt
+	-cd $(DEV_DIR) && valgrind $(VALGRIND_FLAGS) -- git-nv status
+
+fmt:
+	git ls-files '*.c' '*.h' | xargs clang-format -i

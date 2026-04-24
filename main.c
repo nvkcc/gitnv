@@ -142,6 +142,7 @@ int gitnv_status(GitnvState *z) {
         cache_ptr += n;
         i++;
     }
+    fclose(status_f);
 
     char cache_filepath[GITNV_MAX_PATH_LEN];
     gitnv_state_get_cache_filepath(z, cache_filepath, GITNV_MAX_PATH_LEN);
